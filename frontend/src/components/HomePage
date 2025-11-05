@@ -1,0 +1,391 @@
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Search, 
+  Map, 
+  Camera, 
+  Heart, 
+  MessageCircle, 
+  Share2, 
+  User, 
+  Settings, 
+  Menu, 
+  X,
+  Filter,
+  Star,
+  Navigation,
+  Compass,
+  Globe
+} from 'lucide-react';
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('explore');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('all');
+
+  // Mock posts data
+  const posts = [
+    {
+      id: 1,
+      user: {
+        name: 'Sarah Chen',
+        username: '@sarah_travels',
+        avatar: 'https://placehold.co/40x40/ec4899/ffffff?text=SC'
+      },
+      image: 'https://placehold.co/600x400/4f46e5/ffffff?text=Santorini+Greece',
+      caption: 'Sunset dreams in Santorini 🌅 The white buildings against the blue sea are absolutely magical!',
+      location: 'Santorini, Greece',
+      likes: 1247,
+      comments: 89,
+      date: '2 hours ago',
+      isLiked: false
+    },
+    {
+      id: 2,
+      user: {
+        name: 'Marco Rossi',
+        username: '@marco_adventures',
+        avatar: 'https://placehold.co/40x40/0ea5e9/ffffff?text=MR'
+      },
+      image: 'https://placehold.co/600x400/ec4899/ffffff?text=Kyoto+Japan',
+      caption: 'Cherry blossom season in Kyoto is pure magic! 🌸 Spent the day exploring ancient temples.',
+      location: 'Kyoto, Japan',
+      likes: 892,
+      comments: 56,
+      date: '5 hours ago',
+      isLiked: true
+    },
+    {
+      id: 3,
+      user: {
+        name: 'Emma Wilson',
+        username: '@emma_wanders',
+        avatar: 'https://placehold.co/40x40/10b981/ffffff?text=EW'
+      },
+      image: 'https://placehold.co/600x400/0ea5e9/ffffff?text=Machu+Picchu',
+      caption: 'Finally made it to Machu Picchu! The hike was challenging but every step was worth it.',
+      location: 'Machu Picchu, Peru',
+      likes: 2156,
+      comments: 134,
+      date: '1 day ago',
+      isLiked: false
+    },
+    {
+      id: 4,
+      user: {
+        name: 'David Kim',
+        username: '@david_explores',
+        avatar: 'https://placehold.co/40x40/f59e0b/ffffff?text=DK'
+      },
+      image: 'https://placehold.co/600x400/10b981/ffffff?text=Northern+Lights',
+      caption: 'Chasing the Northern Lights in Iceland! Nature\'s most incredible light show.',
+      location: 'Reykjavik, Iceland',
+      likes: 1876,
+      comments: 98,
+      date: '2 days ago',
+      isLiked: false
+    }
+  ];
+
+  const filters = [
+    { id: 'all', name: 'All Posts', icon: Globe },
+    { id: 'popular', name: 'Popular', icon: Star },
+    { id: 'nearby', name: 'Nearby', icon: Navigation },
+    { id: 'trending', name: 'Trending', icon: Compass }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 relative overflow-hidden">
+      {/* Background world map pattern */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
+      </div>
+      
+      {/* Decorative elements */}
+      <div className="absolute top-10 right-10 w-20 h-20 bg-blue-500 rounded-full opacity-20 blur-xl"></div>
+      <div className="absolute bottom-10 left-10 w-24 h-24 bg-orange-500 rounded-full opacity-20 blur-xl"></div>
+      <div className="absolute top-1/4 left-1/4 w-12 h-12 bg-white rounded-full opacity-10"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-16 h-16 bg-white rounded-full opacity-10"></div>
+
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header/Navbar */}
+        <motion.header
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center justify-between py-6"
+        >
+          {/* Logo */}
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+              <Camera className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-white hidden sm:block">
+              <span className="text-blue-300">Wander</span>
+              <span className="text-orange-300">Lens</span>
+            </h1>
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            <button
+              onClick={() => setActiveTab('explore')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all ${
+                activeTab === 'explore'
+                  ? 'bg-white/20 text-white'
+                  : 'text-blue-200 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <Compass className="w-4 h-4" />
+              <span>Explore</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('map')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all ${
+                activeTab === 'map'
+                  ? 'bg-white/20 text-white'
+                  : 'text-blue-200 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <Map className="w-4 h-4" />
+              <span>Map</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('search')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all ${
+                activeTab === 'search'
+                  ? 'bg-white/20 text-white'
+                  : 'text-blue-200 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              <span>Search</span>
+            </button>
+          </nav>
+
+          {/* User Actions */}
+          <div className="flex items-center space-x-3">
+            <button className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors hidden sm:block">
+              <Settings className="w-5 h-5" />
+            </button>
+            <button className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors">
+              <User className="w-5 h-5" />
+            </button>
+            
+            {/* Mobile Menu Button */}
+            <button 
+              className="md:hidden p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </motion.header>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="md:hidden bg-white/10 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/20"
+          >
+            <nav className="flex flex-col space-y-3">
+              <button
+                onClick={() => {
+                  setActiveTab('explore');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
+                  activeTab === 'explore'
+                    ? 'bg-white/20 text-white'
+                    : 'text-blue-200 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Compass className="w-4 h-4" />
+                <span>Explore</span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('map');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
+                  activeTab === 'map'
+                    ? 'bg-white/20 text-white'
+                    : 'text-blue-200 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Map className="w-4 h-4" />
+                <span>Map</span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('search');
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
+                  activeTab === 'search'
+                    ? 'bg-white/20 text-white'
+                    : 'text-blue-200 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Search className="w-4 h-4" />
+                <span>Search</span>
+              </button>
+            </nav>
+          </motion.div>
+        )}
+
+        {/* Search Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/20"
+        >
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-200 w-5 h-5" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search destinations, locations, or users..."
+              className="w-full pl-12 pr-4 py-3 bg-transparent border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+            />
+          </div>
+        </motion.div>
+
+        {/* Filter Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex flex-wrap gap-2 mb-6"
+        >
+          {filters.map((filter) => {
+            const IconComponent = filter.icon;
+            return (
+              <button
+                key={filter.id}
+                onClick={() => setSelectedFilter(filter.id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  selectedFilter === filter.id
+                    ? 'bg-gradient-to-r from-blue-500 to-orange-500 text-white shadow-lg'
+                    : 'bg-white/10 text-blue-200 hover:bg-white/20 hover:text-white'
+                }`}
+              >
+                <IconComponent className="w-4 h-4" />
+                <span>{filter.name}</span>
+              </button>
+            );
+          })}
+        </motion.div>
+
+        {/* Map View (when active) */}
+        {activeTab === 'map' && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white/10 backdrop-blur-lg rounded-2xl h-96 mb-6 border border-white/20 flex items-center justify-center"
+          >
+            <div className="text-center">
+              <Map className="w-16 h-16 text-blue-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">Interactive World Map</h3>
+              <p className="text-blue-200">Click on locations to see posts from around the world</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Posts Feed */}
+        <div className="space-y-6">
+          {posts.map((post, index) => (
+            <motion.article
+              key={post.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 * index }}
+              className="bg-white/10 backdrop-blur-lg rounded-2xl overflow-hidden shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300"
+            >
+              {/* Post Header */}
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src={post.user.avatar}
+                    alt={post.user.name}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div>
+                    <h3 className="font-semibold text-white">{post.user.name}</h3>
+                    <p className="text-blue-200 text-sm">{post.user.username}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1 text-blue-200">
+                  <MapPinIcon className="w-4 h-4" />
+                  <span className="text-sm">{post.location}</span>
+                </div>
+              </div>
+
+              {/* Post Image */}
+              <img
+                src={post.image}
+                alt={post.caption}
+                className="w-full h-80 object-cover"
+              />
+
+              {/* Post Actions */}
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-4">
+                    <button className={`flex items-center space-x-1 p-2 rounded-full transition-colors ${
+                      post.isLiked ? 'text-red-400' : 'text-blue-200 hover:text-red-400'
+                    }`}>
+                      <Heart className={`w-5 h-5 ${post.isLiked ? 'fill-current' : ''}`} />
+                      <span className="text-white">{post.likes.toLocaleString()}</span>
+                    </button>
+                    <button className="flex items-center space-x-1 text-blue-200 hover:text-white p-2 rounded-full transition-colors">
+                      <MessageCircle className="w-5 h-5" />
+                      <span className="text-white">{post.comments}</span>
+                    </button>
+                    <button className="flex items-center space-x-1 text-blue-200 hover:text-white p-2 rounded-full transition-colors">
+                      <Share2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Caption */}
+                <p className="text-white mb-2 leading-relaxed">{post.caption}</p>
+                <p className="text-blue-300 text-sm">{post.date}</p>
+              </div>
+            </motion.article>
+          ))}
+        </div>
+
+        {/* Load More Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="text-center py-8"
+        >
+          <button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl">
+            Load More Posts
+          </button>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+// Custom MapPin icon component
+function MapPinIcon({ className }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+      <circle cx="12" cy="10" r="3"/>
+    </svg>
+  );
+}
+import { Plus } from 'lucide-react';

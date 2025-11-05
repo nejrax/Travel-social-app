@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useContext, createContext } from 'react';
+ /*import React, { useState, useEffect, useContext, createContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
-
+/*
 // Mock data for locations
 const mockLocations = {
   country: "Bosnia and Herzegovina",
@@ -779,3 +779,20 @@ const App = () => {
 };
 
 export default App
+*/
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LoginPage from './components/LoginPage';
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        {/* Add other routes here */}
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
