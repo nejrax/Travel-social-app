@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["frontend/src/*"],
+      "components/*": ["frontend/src/components.txt/*"]
+    }
+  },
+  "include": ["frontend/src"]
+}

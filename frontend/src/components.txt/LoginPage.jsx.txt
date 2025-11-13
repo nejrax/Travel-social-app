@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, User, Camera } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-export default function App() {
+export default function LoginPage({ onLoginSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -21,24 +23,19 @@ export default function App() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission logic here
     console.log('Form submitted:', formData);
+    
+    // Mock authentication
+    onLoginSuccess();
+    navigate('/home');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background world map pattern */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
-      </div>
-      
       {/* Decorative elements */}
       <div className="absolute top-10 right-10 w-20 h-20 bg-blue-500 rounded-full opacity-20 blur-xl"></div>
       <div className="absolute bottom-10 left-10 w-24 h-24 bg-orange-500 rounded-full opacity-20 blur-xl"></div>
-      <div className="absolute top-1/4 left-1/4 w-12 h-12 bg-white rounded-full opacity-10"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-16 h-16 bg-white rounded-full opacity-10"></div>
 
-      {/* Main card */}
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -58,9 +55,10 @@ export default function App() {
             <p className="text-blue-200 mt-2">Join the global travel community</p>
           </div>
 
-          {/* Toggle between Login and Signup */}
+          {/* Toggle */}
           <div className="flex mb-6 bg-white/10 rounded-xl p-1">
             <button
+              type="button"
               onClick={() => setIsLogin(true)}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                 isLogin
@@ -71,6 +69,7 @@ export default function App() {
               Sign In
             </button>
             <button
+              type="button"
               onClick={() => setIsLogin(false)}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                 !isLogin
@@ -90,19 +89,15 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                <label className="block text-white text-sm font-medium mb-2">
-                  Username
-                </label>
+                <label className="block text-white text-sm font-medium mb-2">Username</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-blue-200" />
-                  </div>
+                  <User className="absolute left-3 top-3 h-5 w-5 text-blue-200" />
                   <input
                     type="text"
                     name="username"
                     value={formData.username}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                    className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     placeholder="Enter your username"
                     required={!isLogin}
                   />
@@ -115,19 +110,15 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: isLogin ? 0.1 : 0.2 }}
             >
-              <label className="block text-white text-sm font-medium mb-2">
-                Email
-              </label>
+              <label className="block text-white text-sm font-medium mb-2">Email</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-blue-200" />
-                </div>
+                <Mail className="absolute left-3 top-3 h-5 w-5 text-blue-200" />
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   placeholder="Enter your email"
                   required
                 />
@@ -139,26 +130,22 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: isLogin ? 0.2 : 0.3 }}
             >
-              <label className="block text-white text-sm font-medium mb-2">
-                Password
-              </label>
+              <label className="block text-white text-sm font-medium mb-2">Password</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-blue-200" />
-                </div>
+                <Lock className="absolute left-3 top-3 h-5 w-5 text-blue-200" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   placeholder="Enter your password"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute right-3 top-3"
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-blue-200" />
@@ -175,19 +162,15 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <label className="block text-white text-sm font-medium mb-2">
-                  Confirm Password
-                </label>
+                <label className="block text-white text-sm font-medium mb-2">Confirm Password</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-blue-200" />
-                  </div>
+                  <Lock className="absolute left-3 top-3 h-5 w-5 text-blue-200" />
                   <input
                     type="password"
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                    className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     placeholder="Confirm your password"
                     required={!isLogin}
                   />
@@ -199,59 +182,14 @@ export default function App() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="w-full py-3 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all mt-6"
             >
               {isLogin ? 'Sign In' : 'Create Account'}
             </motion.button>
           </form>
-
-          {/* Forgot password */}
-          {isLogin && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-center mt-4"
-            >
-              <button className="text-blue-200 hover:text-white text-sm transition-colors">
-                Forgot your password?
-              </button>
-            </motion.div>
-          )}
-
-          {/* Social login */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="mt-6"
-          >
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/20"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-transparent text-blue-200">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-3 gap-3">
-              {['Google', 'Facebook', 'Apple'].map((provider) => (
-                <motion.button
-                  key={provider}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="py-2 px-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-white font-medium transition-all duration-300"
-                >
-                  {provider}
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
         </div>
       </motion.div>
     </div>
   );
 }
+

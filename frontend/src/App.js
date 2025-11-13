@@ -1,798 +1,1451 @@
- /*import React, { useState, useEffect, useContext, createContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
-/*
-// Mock data for locations
-const mockLocations = {
-  country: "Bosnia and Herzegovina",
-  cities: [
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Search, 
+  Map, 
+  Camera, 
+  Heart, 
+  MessageCircle, 
+  Share2, 
+  User, 
+  Settings, 
+  Menu, 
+  X,
+  Filter,
+  Star,
+  Navigation,
+  Compass,
+  Globe,
+  Plus,
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  Edit3,
+  LogOut,
+  MoreHorizontal,
+  Upload,
+  ArrowLeft,
+  Bell,
+  Home,
+  AtSign,
+  UserPlus,
+  Check,
+  MapPin
+} from 'lucide-react';
+
+export default function App() {
+  const [currentPage, setCurrentPage] = useState('splash');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [activeTab, setActiveTab] = useState('explore');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [caption, setCaption] = useState('');
+  const [location, setLocation] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [showLogo, setShowLogo] = useState(false);
+  const [showText, setShowText] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Mock data
+  const userData = {
+    name: 'Alex Morgan',
+    username: '@wanderer_alex',
+    bio: 'Travel photographer & adventure seeker 🌍 Capturing moments from 45+ countries. Currently exploring Southeast Asia!',
+    location: 'Bali, Indonesia',
+    joinDate: 'January 2023',
+    followers: 2847,
+    following: 1253,
+    posts: 89
+  };
+
+  const posts = [
     {
-      name: "Sarajevo",
-      categories: {
-        shoppingCenters: ["SCC", "Alta", "Aria"],
-        restaurants: ["Željo", "Park Prinčeva", "Metropolis"],
-        famousPlaces: ["Baščaršija", "Vijećnica", "Avaz Tower"]
-      }
+      id: 1,
+      user: {
+        name: 'Sarah Chen',
+        username: '@sarah_travels',
+        avatar: 'https://placehold.co/40x40/ec4899/ffffff?text=SC'
+      },
+      image: 'https://placehold.co/600x400/4f46e5/ffffff?text=Santorini+Greece',
+      caption: 'Sunset dreams in Santorini 🌅 The white buildings against the blue sea are absolutely magical!',
+      location: 'Santorini, Greece',
+      likes: 1247,
+      comments: 89,
+      date: '2 hours ago',
+      isLiked: false
     },
     {
-      name: "Mostar",
-      categories: {
-        shoppingCenters: ["Rondo", "Cactus"],
-        restaurants: ["Tima", "Šadrvan", "Kujundžiluk"],
-        famousPlaces: ["Stari Most", "Koski Mehmed Paša Mosque", "Crooked Bridge"]
-      }
+      id: 2,
+      user: {
+        name: 'Marco Rossi',
+        username: '@marco_adventures',
+        avatar: 'https://placehold.co/40x40/0ea5e9/ffffff?text=MR'
+      },
+      image: 'https://placehold.co/600x400/ec4899/ffffff?text=Kyoto+Japan',
+      caption: 'Cherry blossom season in Kyoto is pure magic! 🌸 Spent the day exploring ancient temples.',
+      location: 'Kyoto, Japan',
+      likes: 892,
+      comments: 56,
+      date: '5 hours ago',
+      isLiked: true
+    },
+    {
+      id: 3,
+      user: {
+        name: 'Emma Wilson',
+        username: '@emma_wanders',
+        avatar: 'https://placehold.co/40x40/10b981/ffffff?text=EW'
+      },
+      image: 'https://placehold.co/600x400/0ea5e9/ffffff?text=Machu+Picchu',
+      caption: 'Finally made it to Machu Picchu! The hike was challenging but every step was worth it.',
+      location: 'Machu Picchu, Peru',
+      likes: 2156,
+      comments: 134,
+      date: '1 day ago',
+      isLiked: false
     }
-  ]
-};
+  ];
 
-// Mock posts data
-const mockPosts = [
-  {
-    id: 1,
-    userId: "1",
-    username: "traveler123",
-    title: "Amazing view from Avaz Tower",
-    description: "The panoramic view of Sarajevo from Avaz Tower is absolutely breathtaking! Perfect spot for sunset photos.",
-    city: "Sarajevo",
-    place: "Avaz Tower",
-    imageUrl: "https://placehold.co/400x300/4F46E5/FFFFFF?text=Avaz+Tower",
-    googleMapsLink: "https://maps.google.com/?q=Avaz+Tower",
-    price: 10,
-    createdAt: "2024-01-15"
-  },
-  {
-    id: 2,
-    userId: "2",
-    username: "explorer456",
-    title: "Traditional Bosnian cuisine",
-    description: "Tried the best ćevapi at Željo restaurant. Highly recommend for authentic local food!",
-    city: "Sarajevo",
-    place: "Željo",
-    imageUrl: "https://placehold.co/400x300/059669/FFFFFF?text=Bosnian+Food",
-    googleMapsLink: "https://maps.google.com/?q=Željo+Sarajevo",
-    price: 15,
-    createdAt: "2024-01-12"
-  },
-  {
-    id: 3,
-    userId: "3",
-    username: "wanderlust789",
-    title: "Stari Most at sunset",
-    description: "The Old Bridge in Mostar is even more magical during sunset. Don't miss the traditional diving ceremony!",
-    city: "Mostar",
-    place: "Stari Most",
-    imageUrl: "https://placehold.co/400x300/DC2626/FFFFFF?text=Stari+Most",
-    googleMapsLink: "https://maps.google.com/?q=Stari+Most+Mostar",
-    price: 0,
-    createdAt: "2024-01-10"
-  }
-];
+  const popularDestinations = [
+    {
+      id: 1,
+      name: 'Santorini',
+      country: 'Greece',
+      image: 'https://placehold.co/400x300/4f46e5/ffffff?text=Santorini',
+      posts: 1247,
+      rating: 4.9,
+      trending: true
+    },
+    {
+      id: 2,
+      name: 'Kyoto',
+      country: 'Japan',
+      image: 'https://placehold.co/400x300/ec4899/ffffff?text=Kyoto',
+      posts: 892,
+      rating: 4.8,
+      trending: true
+    },
+    {
+      id: 3,
+      name: 'Bali',
+      country: 'Indonesia',
+      image: 'https://placehold.co/400x300/10b981/ffffff?text=Bali',
+      posts: 3421,
+      rating: 4.7,
+      trending: true
+    }
+  ];
 
-// Auth Context
-const AuthContext = createContext();
+  const notifications = [
+    {
+      id: 1,
+      type: 'like',
+      user: {
+        name: 'Sarah Chen',
+        username: '@sarah_travels',
+        avatar: 'https://placehold.co/40x40/ec4899/ffffff?text=SC'
+      },
+      postImage: 'https://placehold.co/200x200/4f46e5/ffffff?text=Santorini',
+      postLocation: 'Santorini, Greece',
+      time: '2 hours ago',
+      read: false
+    },
+    {
+      id: 2,
+      type: 'follow',
+      user: {
+        name: 'Marco Rossi',
+        username: '@marco_adventures',
+        avatar: 'https://placehold.co/40x40/0ea5e9/ffffff?text=MR'
+      },
+      time: '5 hours ago',
+      read: false
+    },
+    {
+      id: 3,
+      type: 'comment',
+      user: {
+        name: 'Emma Wilson',
+        username: '@emma_wanders',
+        avatar: 'https://placehold.co/40x40/10b981/ffffff?text=EW'
+      },
+      comment: 'This is absolutely stunning! Where exactly is this?',
+      postImage: 'https://placehold.co/200x200/0ea5e9/ffffff?text=Machu+Picchu',
+      postLocation: 'Machu Picchu, Peru',
+      time: '1 day ago',
+      read: true
+    }
+  ];
 
-const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const unreadCount = notifications.filter(n => !n.read).length;
 
+  // Handle splash screen animation
   useEffect(() => {
-    // Check if user is logged in (mock implementation)
-    const token = localStorage.getItem('token');
-    if (token) {
-      setUser({ id: '1', username: 'traveler123', email: 'user@example.com' });
+    if (currentPage === 'splash') {
+      const timer1 = setTimeout(() => setShowLogo(true), 300);
+      const timer2 = setTimeout(() => setShowText(true), 1500);
+      const timer3 = setTimeout(() => setCurrentPage('login'), 3000);
+      
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+      };
     }
-    setLoading(false);
-  }, []);
+  }, [currentPage]);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('token', 'mock-jwt-token');
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('token');
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-const useAuth = () => useContext(AuthContext);
-
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-  //const navigate = useNavigate();
-
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
-};
-
-// Login Page
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Simple validation
-    if (!email || !password) {
-      setError('Please fill in all fields');
-      return;
+  // Navigation functions
+  const goToHome = () => setCurrentPage('home');
+  const goToLogin = () => setCurrentPage('login');
+  const goToProfile = () => setCurrentPage('profile');
+  const goToCreate = () => setCurrentPage('create');
+  const goToFind = () => setCurrentPage('find');
+  const goToNotifications = () => setCurrentPage('notifications');
+  const goBack = () => {
+    switch (currentPage) {
+      case 'create':
+      case 'find':
+      case 'profile':
+      case 'notifications':
+        setCurrentPage('home');
+        break;
+      case 'login':
+        setCurrentPage('splash');
+        break;
+      default:
+        setCurrentPage('home');
     }
-    
-    // Mock login
-    login({ id: '1', username: 'traveler123', email });
-    navigate('/explore');
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to your TravelConnect account</p>
+  // Splash Screen
+  if (currentPage === 'splash') {
+    return (
+      <div className="w-full h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 flex items-center justify-center overflow-hidden relative">
+        <div className="absolute inset-0 opacity-20">
+          <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
         </div>
         
-        {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4">{error}</div>}
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="your@email.com"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="••••••••"
-            />
-          </div>
-          
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200"
+        <div className="relative z-10 text-center">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: showLogo ? 1 : 0.5, opacity: showLogo ? 1 : 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.3 }}
+            className="mb-8"
           >
-            Sign In
-          </button>
-        </form>
-        
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-blue-600 font-semibold hover:underline">
-              Sign up
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Signup Page
-const Signup = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const navigate = useNavigate();
-
-  const validatePassword = (password) => {
-    return password.length >= 8 && /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    if (!validatePassword(password)) {
-      setError('Password must be at least 8 characters with letters and numbers');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    // Mock signup
-    setSuccess('Account created successfully! Redirecting to login...');
-    setTimeout(() => navigate('/login'), 2000);
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h1>
-          <p className="text-gray-600">Join TravelConnect to share your travel experiences</p>
-        </div>
-        
-        {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4">{error}</div>}
-        {success && <div className="bg-green-100 text-green-700 p-3 rounded-lg mb-4">{success}</div>}
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="your@email.com"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="••••••••"
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Must be at least 8 characters with letters and numbers
-            </p>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-          
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200"
-          >
-            Create Account
-          </button>
-        </form>
-        
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 font-semibold hover:underline">
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Navigation Bar
-const Navbar = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  if (!user) return null;
-
-  return (
-    <nav className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/explore" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">T</span>
-              </div>
-              <span className="text-xl font-bold text-gray-800">TravelConnect</span>
-            </Link>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <Link to="/explore" className="text-gray-600 hover:text-blue-600 font-medium">Explore</Link>
-            <Link to="/locations" className="text-gray-600 hover:text-blue-600 font-medium">Locations</Link>
-            <Link to="/create-post" className="text-gray-600 hover:text-blue-600 font-medium">Create Post</Link>
-            <Link to="/profile" className="text-gray-600 hover:text-blue-600 font-medium">Profile</Link>
-            <button
-              onClick={handleLogout}
-              className="text-gray-600 hover:text-red-600 font-medium"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-};
-
-// Explore Page
-const Explore = () => {
-  const [posts] = useState(mockPosts);
-  const [filter, setFilter] = useState('');
-
-  const filteredPosts = filter 
-    ? posts.filter(post => 
-        post.city.toLowerCase().includes(filter.toLowerCase()) ||
-        post.place.toLowerCase().includes(filter.toLowerCase())
-      )
-    : posts;
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">Explore Travel Experiences</h1>
-          <div className="relative max-w-md">
-            <input
-              type="text"
-              placeholder="Search by city or place..."
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <svg className="w-5 h-5 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPosts.map(post => (
-            <div key={post.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-              <img 
-                src={post.imageUrl} 
-                alt={post.title}
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-blue-600">@{post.username}</span>
-                  <span className="text-sm text-gray-500">{post.createdAt}</span>
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">{post.title}</h3>
-                <p className="text-gray-600 mb-3">{post.description}</p>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">{post.city}</span>
-                    <span className="mx-2">•</span>
-                    <span className="text-sm text-gray-600">{post.place}</span>
+            <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
+              <div className="relative w-64 h-64 mx-auto">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                  <div className="w-full h-full relative">
+                    <div className="absolute top-1/4 left-1/4 w-16 h-12 bg-orange-500 rounded-md transform rotate-12"></div>
+                    <div className="absolute bottom-1/4 left-1/3 w-12 h-16 bg-orange-500 rounded-md transform -rotate-15"></div>
+                    <div className="absolute top-1/3 right-1/4 w-14 h-14 bg-orange-500 rounded-md"></div>
+                    <div className="absolute top-1/4 right-1/5 w-16 h-12 bg-orange-500 rounded-md"></div>
+                    <div className="absolute bottom-1/3 right-1/4 w-8 h-8 bg-orange-500 rounded-md"></div>
                   </div>
-                  {post.price > 0 && (
-                    <span className="bg-green-100 text-green-800 text-sm font-medium px-2 py-1 rounded">
-                      ${post.price}
-                    </span>
-                  )}
-                </div>
-                <a 
-                  href={post.googleMapsLink} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center"
-                >
-                  View on Google Maps
-                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-16 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg">
+                      <div className="w-8 h-6 bg-gray-800 rounded-full flex items-center justify-center">
+                        <div className="w-4 h-4 bg-white rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                    <path 
+                      d="M50,50 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0" 
+                      fill="none" 
+                      stroke="white" 
+                      strokeWidth="2"
+                      strokeDasharray="10,10"
+                    />
+                    <circle cx="10" cy="50" r="4" fill="white" />
+                    <circle cx="90" cy="50" r="4" fill="white" />
+                    <circle cx="50" cy="10" r="4" fill="white" />
                   </svg>
-                </a>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Locations Page
-const Locations = () => {
-  const [selectedCity, setSelectedCity] = useState(null);
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Discover Locations</h1>
-        
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">{mockLocations.country}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockLocations.cities.map(city => (
-              <button
-                key={city.name}
-                onClick={() => setSelectedCity(selectedCity === city.name ? null : city.name)}
-                className={`p-4 rounded-lg border-2 text-left transition-all duration-200 ${
-                  selectedCity === city.name 
-                    ? 'border-blue-500 bg-blue-50' 
-                    : 'border-gray-200 hover:border-blue-300'
-                }`}
-              >
-                <h3 className="text-lg font-semibold text-gray-800">{city.name}</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {Object.values(city.categories).flat().length} locations
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {selectedCity && (
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Popular Places in {selectedCity}</h2>
-            <div className="space-y-6">
-              {Object.entries(mockLocations.cities.find(c => c.name === selectedCity)?.categories || {}).map(([category, places]) => (
-                <div key={category}>
-                  <h3 className="text-lg font-semibold text-gray-700 mb-3 capitalize">
-                    {category.replace(/([A-Z])/g, ' $1').trim()}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {places.map(place => (
-                      <div key={place} className="p-3 bg-gray-50 rounded-lg">
-                        <span className="text-gray-800 font-medium">{place}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: showText ? 0 : 50, opacity: showText ? 1 : 0 }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 1.2 }}
+            className="space-y-4"
+          >
+            <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight">
+              <span className="text-blue-300">Wander</span>
+              <span className="text-orange-300">Lens</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-blue-200 font-light">
+              Capture your journey. Share your world.
+            </p>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2, duration: 0.5 }}
+            className="mt-12"
+          >
+            <div className="flex items-center justify-center space-x-2">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  animate={{ 
+                    scale: [1, 1.5, 1],
+                    opacity: [0.5, 1, 0.5]
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    delay: i * 0.3
+                  }}
+                  className="w-3 h-3 bg-white rounded-full"
+                />
               ))}
             </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Create Post Page
-const CreatePost = () => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [country, setCountry] = useState('Bosnia and Herzegovina');
-  const [city, setCity] = useState('');
-  const [place, setPlace] = useState('');
-  const [googleMapsLink, setGoogleMapsLink] = useState('');
-  const [price, setPrice] = useState('');
- const [previewUrl, setPreviewUrl] = useState('');
-  const navigate = useNavigate();
-
-  const handleImageChange = (e) => {
-   const handleImageChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-        setPreviewUrl(URL.createObjectURL(file));
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Mock post creation
-    alert('Post created successfully!');
-    navigate('/explore');
-  };
-
-  const cities = mockLocations.cities.map(city => city.name);
-  }
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Create New Post</h1>
+            <p className="mt-4 text-sm text-blue-200">Loading your travel adventure...</p>
+          </motion.div>
+        </div>
         
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md p-6 space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Amazing sunset at Avaz Tower"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Share your travel experience..."
-              required
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-              <select
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled
-              >
-                <option>Bosnia and Herzegovina</option>
-              </select>
+        <div className="absolute top-10 right-10 w-20 h-20 bg-blue-500 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute bottom-10 left-10 w-24 h-24 bg-orange-500 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute top-1/4 left-1/4 w-12 h-12 bg-white rounded-full opacity-10"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-16 h-16 bg-white rounded-full opacity-10"></div>
+      </div>
+    );
+  }
+
+  // Login Page
+  if (currentPage === 'login') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
+        </div>
+        
+        <div className="absolute top-10 right-10 w-20 h-20 bg-blue-500 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute bottom-10 left-10 w-24 h-24 bg-orange-500 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute top-1/4 left-1/4 w-12 h-12 bg-white rounded-full opacity-10"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-16 h-16 bg-white rounded-full opacity-10"></div>
+
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="relative z-10 w-full max-w-md"
+        >
+          <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
+            <div className="text-center mb-8">
+              <div className="mx-auto w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mb-4">
+                <Camera className="w-12 h-12 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-white">
+                <span className="text-blue-300">Wander</span>
+                <span className="text-orange-300">Lens</span>
+              </h1>
+              <p className="text-blue-200 mt-2">Join the global travel community</p>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
-              <select
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
+
+            <div className="flex mb-6 bg-white/10 rounded-xl p-1">
+              <button
+                onClick={() => setIsLogin(true)}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  isLogin
+                    ? 'bg-white text-indigo-900 shadow-sm'
+                    : 'text-white hover:bg-white/10'
+                }`}
               >
-                <option value="">Select a city</option>
-                {cities.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+                Sign In
+              </button>
+              <button
+                onClick={() => setIsLogin(false)}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  !isLogin
+                    ? 'bg-white text-indigo-900 shadow-sm'
+                    : 'text-white hover:bg-white/10'
+                }`}
+              >
+                Sign Up
+              </button>
             </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Place/Location</label>
-            <input
-              type="text"
-              value={place}
-              onChange={(e) => setPlace(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Avaz Tower, Baščaršija, etc."
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Google Maps Link</label>
-            <input
-              type="url"
-              value={googleMapsLink}
-              onChange={(e) => setGoogleMapsLink(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="https://maps.google.com/..."
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Price per Person (USD)</label>
-            <input
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="15"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Upload Image</label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              {previewUrl ? (
-                <div className="space-y-4">
-                  <img 
-                    src={previewUrl} 
-                    alt="Preview" 
-                    className="mx-auto max-h-64 object-contain"
+
+            <form onSubmit={(e) => { e.preventDefault(); goToHome(); }} className="space-y-4">
+              {!isLogin && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <label className="block text-white text-sm font-medium mb-2">
+                    Username
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <User className="h-5 w-5 text-blue-200" />
+                    </div>
+                    <input
+                      type="text"
+                      className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                      placeholder="Enter your username"
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: isLogin ? 0.1 : 0.2 }}
+              >
+                <label className="block text-white text-sm font-medium mb-2">
+                  Email
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-blue-200" />
+                  </div>
+                  <input
+                    type="email"
+                    className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                    placeholder="Enter your email"
+                  />
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: isLogin ? 0.2 : 0.3 }}
+              >
+                <label className="block text-white text-sm font-medium mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-blue-200" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                    placeholder="Enter your password"
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      setImage(null);
-                      setPreviewUrl('');
-                    }}
-                    className="text-red-600 hover:text-red-800 font-medium"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   >
-                    Remove Image
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5 text-blue-200" />
+                    ) : (
+                      <Eye className="h-5 w-5 text-blue-200" />
+                    )}
                   </button>
                 </div>
-              ) : (
-                <div>
-                  <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <p className="mt-2 text-sm text-gray-600">
-                    <label className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer">
-                      Upload a file
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="sr-only"
-                        required
-                      />
-                    </label>
-                    or drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
-                </div>
-              )}
-            </div>
+              </motion.div>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                className="w-full py-3 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                {isLogin ? 'Sign In' : 'Create Account'}
+              </motion.button>
+            </form>
           </div>
-          
-          <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              onClick={() => navigate('/explore')}
-              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-            >
-              Create Post
-            </button>
-          </div>
-        </form>
+        </motion.div>
       </div>
-    </div>
-  );
-};
+    );
+  }
 
-// Profile Page
-const Profile = () => {
-  const { user } = useAuth();
-  const userPosts = mockPosts.filter(post => post.username === user?.username);
+  // Create Post Page
+  if (currentPage === 'create') {
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      if (selectedImage && caption.trim()) {
+        goToHome();
+        setSelectedImage(null);
+        setCaption('');
+        setLocation('');
+      }
+    };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <div className="flex items-center space-x-4">
-            <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-2xl font-bold">
-                {user?.username?.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">{user?.username}</h1>
-              <p className="text-gray-600">{user?.email}</p>
-            </div>
-          </div>
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
         </div>
         
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">My Posts ({userPosts.length})</h2>
-          {userPosts.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-md p-8 text-center">
-              <p className="text-gray-600">You haven't created any posts yet.</p>
-              <Link 
-                to="/create-post" 
-                className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700"
-              >
-                Create Your First Post
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {userPosts.map(post => (
-                <div key={post.id} className="bg-white rounded-xl shadow-md p-6">
-                  <img 
-                    src={post.imageUrl} 
-                    alt={post.title}
-                    className="w-full h-48 object-cover rounded-lg mb-4"
+        <div className="absolute top-10 right-10 w-20 h-20 bg-blue-500 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute bottom-10 left-10 w-24 h-24 bg-orange-500 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute top-1/4 left-1/4 w-12 h-12 bg-white rounded-full opacity-10"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-16 h-16 bg-white rounded-full opacity-10"></div>
+
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <motion.header
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center justify-between mb-8"
+          >
+            <button 
+              onClick={goBack}
+              className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h2 className="text-2xl font-bold text-white">Create New Post</h2>
+            <div className="w-10"></div>
+          </motion.header>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20"
+          >
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-4">
+                <label className="block text-white text-lg font-semibold">
+                  Upload Photo
+                </label>
+                
+                {selectedImage ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative group"
+                  >
+                    <img
+                      src={selectedImage}
+                      alt="Preview"
+                      className="w-full h-96 object-cover rounded-2xl"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSelectedImage(null)}
+                      className="absolute top-4 right-4 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="border-2 border-dashed border-white/30 rounded-2xl p-12 text-center hover:border-white/50 transition-colors cursor-pointer"
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => setSelectedImage(ev.target.result);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <label htmlFor="image-upload" className="cursor-pointer">
+                      <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-orange-500 rounded-full flex items-center justify-center mb-4">
+                        <Upload className="w-8 h-8 text-white" />
+                      </div>
+                      <p className="text-white font-medium mb-2">Click to upload photo</p>
+                      <p className="text-blue-200 text-sm">or drag and drop</p>
+                    </label>
+                  </motion.div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-white text-lg font-semibold">
+                  Caption
+                </label>
+                <textarea
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  placeholder="Tell your story... What made this moment special? 🌍✨"
+                  className="w-full h-32 p-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-white text-lg font-semibold">
+                  Location
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <MapPin className="h-5 w-5 text-blue-200" />
+                  </div>
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="Add location (e.g., Santorini, Greece)"
+                    className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                   />
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">{post.title}</h3>
-                  <p className="text-gray-600 mb-3">{post.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{post.city} • {post.place}</span>
-                    {post.price > 0 && (
-                      <span className="bg-green-100 text-green-800 text-sm font-medium px-2 py-1 rounded">
-                        ${post.price}
-                      </span>
+                </div>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={!selectedImage || !caption.trim()}
+                className="w-full py-4 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-bold text-lg rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <Plus className="w-5 h-5" />
+                  <span>Create Post</span>
+                </div>
+              </motion.button>
+            </form>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Find Page
+  if (currentPage === 'find') {
+    const filteredDestinations = popularDestinations.filter(destination => {
+      const matchesSearch = destination.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           destination.country.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSearch;
+    });
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
+        </div>
+        
+        <div className="absolute top-10 right-10 w-20 h-20 bg-blue-500 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute bottom-10 left-10 w-24 h-24 bg-orange-500 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute top-1/4 left-1/4 w-12 h-12 bg-white rounded-full opacity-10"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-16 h-16 bg-white rounded-full opacity-10"></div>
+
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <motion.header
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center justify-between mb-8"
+          >
+            <button 
+              onClick={goBack}
+              className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h2 className="text-2xl font-bold text-white">Find Destinations</h2>
+            <div className="w-10"></div>
+          </motion.header>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 mb-8 border border-white/20"
+          >
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-200 w-5 h-5" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search destinations, cities, or countries..."
+                className="w-full pl-12 pr-12 py-4 bg-transparent border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-lg"
+                autoFocus
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-200 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="mb-6"
+          >
+            <h3 className="text-white text-lg font-semibold">
+              {filteredDestinations.length} destinations found
+              {searchQuery && ` for "${searchQuery}"`}
+            </h3>
+          </motion.div>
+
+          {filteredDestinations.length > 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {filteredDestinations.map((destination, index) => (
+                <motion.div
+                  key={destination.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, delay: 0.1 * index }}
+                  className="bg-white/10 backdrop-blur-lg rounded-2xl overflow-hidden shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+                >
+                  <div className="relative">
+                    <img
+                      src={destination.image}
+                      alt={destination.name}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {destination.trending && (
+                      <div className="absolute top-3 left-3 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1">
+                        <Star className="w-3 h-3 fill-current" />
+                        <span>Trending</span>
+                      </div>
                     )}
                   </div>
-                </div>
+                  
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="text-xl font-bold text-white mb-1">{destination.name}</h3>
+                        <p className="text-blue-200 flex items-center space-x-1">
+                          <MapPin className="w-4 h-4" />
+                          <span>{destination.country}</span>
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center space-x-1 text-yellow-400 mb-1">
+                          <Star className="w-4 h-4 fill-current" />
+                          <span className="text-white font-semibold">{destination.rating}</span>
+                        </div>
+                        <div className="flex items-center space-x-1 text-blue-200">
+                          <Camera className="w-4 h-4" />
+                          <span className="text-sm">{destination.posts.toLocaleString()} posts</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <button className="w-full mt-4 py-2 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all duration-300 flex items-center justify-center space-x-2">
+                      <Compass className="w-4 h-4" />
+                      <span>Explore {destination.name}</span>
+                    </button>
+                  </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center py-16"
+            >
+              <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Search className="w-12 h-12 text-blue-300" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">No destinations found</h3>
+              <p className="text-blue-200 text-lg">
+                Try searching for different locations
+              </p>
+            </motion.div>
           )}
         </div>
       </div>
+    );
+  }
+
+  // Profile Page
+  if (currentPage === 'profile') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 p-4 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
+        </div>
+        
+        <div className="absolute top-10 right-10 w-20 h-20 bg-blue-500 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute bottom-10 left-10 w-24 h-24 bg-orange-500 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute top-1/4 left-1/4 w-12 h-12 bg-white rounded-full opacity-10"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-16 h-16 bg-white rounded-full opacity-10"></div>
+
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex justify-between items-center mb-8"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  <span className="text-blue-300">Wander</span>
+                  <span className="text-orange-300">Lens</span>
+                </h1>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors">
+                <Settings className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={goToLogin}
+                className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20 mb-8"
+          >
+            <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+              <div className="relative">
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                  <Camera className="w-16 h-16 text-white" />
+                </div>
+                <button className="absolute bottom-2 right-2 p-2 bg-orange-500 rounded-full hover:bg-orange-600 transition-colors">
+                  <Edit3 className="w-4 h-4 text-white" />
+                </button>
+              </div>
+
+              <div className="flex-1 text-center md:text-left">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+                  <div>
+                    <h2 className="text-3xl font-bold text-white mb-1">{userData.name}</h2>
+                    <p className="text-blue-200">{userData.username}</p>
+                  </div>
+                  <button 
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="mt-4 md:mt-0 px-6 py-2 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all duration-300"
+                  >
+                    {isEditing ? 'Save Changes' : 'Edit Profile'}
+                  </button>
+                </div>
+
+                {isEditing ? (
+                  <textarea
+                    defaultValue={userData.bio}
+                    className="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none mb-4"
+                    rows="3"
+                  />
+                ) : (
+                  <p className="text-blue-200 mb-4 leading-relaxed">{userData.bio}</p>
+                )}
+
+                <div className="flex flex-wrap justify-center md:justify-start gap-6 text-sm">
+                  <div className="flex items-center space-x-2 text-blue-200">
+                    <MapPin className="w-4 h-4" />
+                    <span>{userData.location}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-blue-200">
+                    <Navigation className="w-4 h-4" />
+                    <span>Joined {userData.joinDate}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-center md:justify-start space-x-8 mt-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-white">{userData.posts}</div>
+                    <div className="text-blue-200 text-sm">Posts</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-white">{userData.followers.toLocaleString()}</div>
+                    <div className="text-blue-200 text-sm">Followers</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-white">{userData.following.toLocaleString()}</div>
+                    <div className="text-blue-200 text-sm">Following</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex space-x-1 bg-white/10 rounded-xl p-1 mb-8"
+          >
+            {['posts', 'likes', 'saved'].map((tab) => (
+              <button
+                key={tab}
+                className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all capitalize ${
+                  tab === 'posts'
+                    ? 'bg-white text-indigo-900 shadow-sm'
+                    : 'text-white hover:bg-white/10'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          >
+            {posts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: 0.1 * index }}
+                className="bg-white/10 backdrop-blur-lg rounded-2xl overflow-hidden shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300"
+              >
+                <div className="relative">
+                  <img
+                    src={post.image}
+                    alt={`Post ${post.id}`}
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="absolute top-3 right-3 flex space-x-2">
+                    <button className="p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors">
+                      <Heart className="w-4 h-4 text-white" />
+                    </button>
+                    <button className="p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors">
+                      <MoreHorizontal className="w-4 h-4 text-white" />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-4 text-sm">
+                      <button className="flex items-center space-x-1 text-blue-200 hover:text-white transition-colors">
+                        <Heart className="w-4 h-4" />
+                        <span>{post.likes}</span>
+                      </button>
+                      <button className="flex items-center space-x-1 text-blue-200 hover:text-white transition-colors">
+                        <MessageCircle className="w-4 h-4" />
+                        <span>{post.comments}</span>
+                      </button>
+                    </div>
+                    <button className="text-blue-200 hover:text-white transition-colors">
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 text-sm text-blue-200 mb-1">
+                    <MapPin className="w-3 h-3" />
+                    <span>{post.location}</span>
+                  </div>
+                  <p className="text-xs text-blue-300">{post.date}</p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Notifications Page
+  if (currentPage === 'notifications') {
+    const getNotificationIcon = (type) => {
+      switch (type) {
+        case 'like':
+          return <Heart className="w-5 h-5 text-red-400 fill-current" />;
+        case 'follow':
+          return <UserPlus className="w-5 h-5 text-blue-400" />;
+        case 'comment':
+          return <MessageCircle className="w-5 h-5 text-green-400" />;
+        case 'mention':
+          return <AtSign className="w-5 h-5 text-purple-400" />;
+        default:
+          return <Camera className="w-5 h-5 text-orange-400" />;
+      }
+    };
+
+    const getNotificationText = (type, user) => {
+      switch (type) {
+        case 'like':
+          return 'liked your post';
+        case 'follow':
+          return 'started following you';
+        case 'comment':
+          return 'commented on your post';
+        case 'mention':
+          return 'mentioned you in a post';
+        default:
+          return 'interacted with your content';
+      }
+    };
+
+    const filteredNotifications = notifications.filter(notification => {
+      if (activeTab === 'all') return true;
+      return notification.type === activeTab;
+    });
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
+        </div>
+        
+        <div className="absolute top-10 right-10 w-20 h-20 bg-blue-500 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute bottom-10 left-10 w-24 h-24 bg-orange-500 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute top-1/4 left-1/4 w-12 h-12 bg-white rounded-full opacity-10"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-16 h-16 bg-white rounded-full opacity-10"></div>
+
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <motion.header
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center justify-between mb-8"
+          >
+            <button 
+              onClick={goBack}
+              className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-white">Notifications</h2>
+              {unreadCount > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center"
+                >
+                  {unreadCount}
+                </motion.span>
+              )}
+            </div>
+            <div className="w-10"></div>
+          </motion.header>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="flex flex-wrap gap-2 mb-6"
+          >
+            {[
+              { id: 'all', name: 'All', count: notifications.length },
+              { id: 'like', name: 'Likes', count: notifications.filter(n => n.type === 'like').length },
+              { id: 'follow', name: 'Follows', count: notifications.filter(n => n.type === 'follow').length },
+              { id: 'comment', name: 'Comments', count: notifications.filter(n => n.type === 'comment').length }
+            ].map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => setActiveTab(filter.id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all relative ${
+                  activeTab === filter.id
+                    ? 'bg-gradient-to-r from-blue-500 to-orange-500 text-white shadow-lg'
+                    : 'bg-white/10 text-blue-200 hover:bg-white/20 hover:text-white'
+                }`}
+              >
+                {getNotificationIcon(filter.id === 'all' ? 'like' : filter.id)}
+                <span>{filter.name}</span>
+                {filter.count > 0 && (
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    activeTab === filter.id ? 'bg-white/20 text-white' : 'bg-white/20 text-blue-200'
+                  }`}>
+                    {filter.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-4"
+          >
+            {filteredNotifications.length > 0 ? (
+              filteredNotifications.map((notification, index) => (
+                <motion.div
+                  key={notification.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 * index }}
+                  className={`bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20 hover:bg-white/20 transition-all duration-300 ${
+                    !notification.read ? 'border-l-4 border-l-blue-400 bg-white/15' : ''
+                  }`}
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      {getNotificationIcon(notification.type)}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <img
+                          src={notification.user.avatar}
+                          alt={notification.user.name}
+                          className="w-8 h-8 rounded-full"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-medium truncate">
+                            {notification.user.name}
+                          </p>
+                          <p className="text-blue-200 text-sm truncate">
+                            {notification.user.username}
+                          </p>
+                        </div>
+                        <span className="text-blue-300 text-xs whitespace-nowrap">
+                          {notification.time}
+                        </span>
+                      </div>
+                      
+                      <p className="text-blue-200 text-sm mb-2">
+                        {getNotificationText(notification.type, notification.user)}
+                      </p>
+                      
+                      {notification.type === 'comment' && (
+                        <p className="text-white text-sm bg-white/5 rounded-lg p-3 mb-2">
+                          "{notification.comment}"
+                        </p>
+                      )}
+                      
+                      {notification.type === 'like' && notification.postImage && (
+                        <div className="flex items-center space-x-2">
+                          <img
+                            src={notification.postImage}
+                            alt="Post"
+                            className="w-16 h-16 object-cover rounded-lg"
+                          />
+                          <div className="flex items-center space-x-1 text-blue-200">
+                            <MapPin className="w-3 h-3" />
+                            <span className="text-xs">{notification.postLocation}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {!notification.read && (
+                      <div className="flex flex-col space-y-1 ml-2">
+                        <button className="p-1 text-green-400 hover:text-green-300 hover:bg-white/10 rounded-full transition-colors">
+                          <Check className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="text-center py-16"
+              >
+                <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  {getNotificationIcon(activeTab)}
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">No notifications</h3>
+                <p className="text-blue-200 text-lg">
+                  {activeTab === 'all' 
+                    ? 'You\'re all caught up! Check back later for new activity.' 
+                    : `No ${activeTab} notifications yet.`
+                  }
+                </p>
+              </motion.div>
+            )}
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Home Page (default)
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
+      <div className="absolute inset-0 opacity-20">
+        <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
+      </div>
+      
+      <div className="absolute top-10 right-10 w-20 h-20 bg-blue-500 rounded-full opacity-20 blur-xl"></div>
+      <div className="absolute bottom-10 left-10 w-24 h-24 bg-orange-500 rounded-full opacity-20 blur-xl"></div>
+      <div className="absolute top-1/4 left-1/4 w-12 h-12 bg-white rounded-full opacity-10"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-16 h-16 bg-white rounded-full opacity-10"></div>
+
+      <div className="max-w-6xl mx-auto px-4">
+        <motion.header
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center justify-between py-6"
+        >
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+              <Camera className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-white hidden sm:block">
+              <span className="text-blue-300">Wander</span>
+              <span className="text-orange-300">Lens</span>
+            </h1>
+          </div>
+
+          <nav className="hidden md:flex items-center space-x-8">
+            <button
+              onClick={() => setActiveTab('explore')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all ${
+                activeTab === 'explore'
+                  ? 'bg-white/20 text-white'
+                  : 'text-blue-200 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <Compass className="w-4 h-4" />
+              <span>Explore</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('map')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all ${
+                activeTab === 'map'
+                  ? 'bg-white/20 text-white'
+                  : 'text-blue-200 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <Map className="w-4 h-4" />
+              <span>Map</span>
+            </button>
+            <button
+              onClick={goToFind}
+              className="flex items-center space-x-2 px-4 py-2 rounded-xl text-blue-200 hover:text-white hover:bg-white/10 transition-all"
+            >
+              <Search className="w-4 h-4" />
+              <span>Search</span>
+            </button>
+          </nav>
+
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={goToNotifications}
+              className="relative p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            <button 
+              onClick={goToProfile}
+              className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            >
+              <User className="w-5 h-5" />
+            </button>
+            
+            <button 
+              className="md:hidden p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </motion.header>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="md:hidden bg-white/10 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/20"
+          >
+            <nav className="flex flex-col space-y-3">
+              <button
+                onClick={() => {
+                  setActiveTab('explore');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 px-4 py-3 rounded-xl text-blue-200 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <Compass className="w-4 h-4" />
+                <span>Explore</span>
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('map');
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 px-4 py-3 rounded-xl text-blue-200 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <Map className="w-4 h-4" />
+                <span>Map</span>
+              </button>
+              <button
+                onClick={() => {
+                  goToFind();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 px-4 py-3 rounded-xl text-blue-200 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <Search className="w-4 h-4" />
+                <span>Search</span>
+              </button>
+            </nav>
+          </motion.div>
+        )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/20"
+        >
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-200 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search destinations, locations, or users..."
+              className="w-full pl-12 pr-4 py-3 bg-transparent border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+            />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex flex-wrap gap-2 mb-6"
+        >
+          {[
+            { id: 'all', name: 'All Posts', icon: Globe },
+            { id: 'popular', name: 'Popular', icon: Star },
+            { id: 'nearby', name: 'Nearby', icon: Navigation },
+            { id: 'trending', name: 'Trending', icon: Compass }
+          ].map((filter) => {
+            const IconComponent = filter.icon;
+            return (
+              <button
+                key={filter.id}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  selectedFilter === filter.id
+                    ? 'bg-gradient-to-r from-blue-500 to-orange-500 text-white shadow-lg'
+                    : 'bg-white/10 text-blue-200 hover:bg-white/20 hover:text-white'
+                }`}
+                onClick={() => setSelectedFilter(filter.id)}
+              >
+                <IconComponent className="w-4 h-4" />
+                <span>{filter.name}</span>
+              </button>
+            );
+          })}
+        </motion.div>
+
+        {activeTab === 'map' && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white/10 backdrop-blur-lg rounded-2xl h-96 mb-6 border border-white/20 flex items-center justify-center"
+          >
+            <div className="text-center">
+              <Map className="w-16 h-16 text-blue-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">Interactive World Map</h3>
+              <p className="text-blue-200">Click on locations to see posts from around the world</p>
+            </div>
+          </motion.div>
+        )}
+
+        <div className="space-y-6">
+          {posts.map((post, index) => (
+            <motion.article
+              key={post.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 * index }}
+              className="bg-white/10 backdrop-blur-lg rounded-2xl overflow-hidden shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300"
+            >
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src={post.user.avatar}
+                    alt={post.user.name}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div>
+                    <h3 className="font-semibold text-white">{post.user.name}</h3>
+                    <p className="text-blue-200 text-sm">{post.user.username}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1 text-blue-200">
+                  <MapPin className="w-4 h-4" />
+                  <span className="text-sm">{post.location}</span>
+                </div>
+              </div>
+
+              <img
+                src={post.image}
+                alt={post.caption}
+                className="w-full h-80 object-cover"
+              />
+
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-4">
+                    <button className={`flex items-center space-x-1 p-2 rounded-full transition-colors ${
+                      post.isLiked ? 'text-red-400' : 'text-blue-200 hover:text-red-400'
+                    }`}>
+                      <Heart className={`w-5 h-5 ${post.isLiked ? 'fill-current' : ''}`} />
+                      <span className="text-white">{post.likes.toLocaleString()}</span>
+                    </button>
+                    <button className="flex items-center space-x-1 text-blue-200 hover:text-white p-2 rounded-full transition-colors">
+                      <MessageCircle className="w-5 h-5" />
+                      <span className="text-white">{post.comments}</span>
+                    </button>
+                    <button className="flex items-center space-x-1 text-blue-200 hover:text-white p-2 rounded-full transition-colors">
+                      <Share2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-white mb-2 leading-relaxed">{post.caption}</p>
+                <p className="text-blue-300 text-sm">{post.date}</p>
+              </div>
+            </motion.article>
+          ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="text-center py-8"
+        >
+          <button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl">
+            Load More Posts
+          </button>
+        </motion.div>
+
+        {/* Floating Create Post Button */}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={goToCreate}
+          className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-blue-500 to-orange-500 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-50"
+        >
+          <Plus className="w-6 h-6" />
+        </motion.button>
+      </div>
     </div>
   );
-};
-
-// Main App Component
-const App = () => {
-  return (
-    <AuthProvider>
-      <Router>
-        <div className="min-h-screen flex flex-col">
-          <Navbar />
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route 
-              path="/explore" 
-              element={
-                <ProtectedRoute>
-                  <Explore />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/locations" 
-              element={
-                <ProtectedRoute>
-                  <Locations />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/create-post" 
-              element={
-                <ProtectedRoute>
-                  <CreatePost />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/profile" 
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="/" element={<Navigate to="/explore" replace />} />
-          </Routes>
-        </div>
-      </Router>
-    </AuthProvider>
-  );
-};
-
-export default App
-*/
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import LoginPage from './components/LoginPage';
-
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        {/* Add other routes here */}
-      </Routes>
-    </Router>
-  );
 }
-
-export default App;
