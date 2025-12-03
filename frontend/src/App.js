@@ -272,12 +272,12 @@ export default function App() {
           <motion.div
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: showText ? 0 : 50, opacity: showText ? 1 : 0 }}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 1.2 }}
+            transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
             className="space-y-4"
           >
             <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight">
-              <span className="text-blue-300">Wander</span>
-              <span className="text-orange-300">Lens</span>
+              <span className="text-blue-300">Travel</span>
+              <span className="text-orange-300">Connect</span>
             </h1>
             <p className="text-xl md:text-2xl text-blue-200 font-light">
               Capture your journey. Share your world.
@@ -344,8 +344,8 @@ export default function App() {
                 <Camera className="w-12 h-12 text-white" />
               </div>
               <h1 className="text-3xl font-bold text-white">
-                <span className="text-blue-300">Wander</span>
-                <span className="text-orange-300">Lens</span>
+                <span className="text-blue-300">Travel</span>
+                <span className="text-orange-300">Connect</span>
               </h1>
               <p className="text-blue-200 mt-2">Join the global travel community</p>
             </div>
@@ -794,8 +794,8 @@ export default function App() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">
-                  <span className="text-blue-300">Wander</span>
-                  <span className="text-orange-300">Lens</span>
+                  <span className="text-blue-300">Travel</span>
+                  <span className="text-orange-300">Connect</span>
                 </h1>
               </div>
             </div>
@@ -1198,8 +1198,8 @@ export default function App() {
               <Camera className="w-5 h-5 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-white hidden sm:block">
-              <span className="text-blue-300">Wander</span>
-              <span className="text-orange-300">Lens</span>
+              <span className="text-blue-300">Travel</span>
+              <span className="text-orange-300">Connect</span>
             </h1>
           </div>
 
