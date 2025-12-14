@@ -1,15 +1,19 @@
+
 const express = require('express');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
 const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
 
-// @route   POST /api/auth/signup
-// @desc    Register user
-router.post('/signup', 
-  body('email').isEmail(),
-  body('password').isLength({ min: 8 }),
+const generateUsername = (email) => {
+  return email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+};
+
+
+router.post('/signup',
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 8 }).matches(/^(?=.*[A-Za-z])(?=.*\d)/, 'i').withMessage('Password must contain letters and numbers'),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -17,79 +21,114 @@ router.post('/signup',
     }
 
     const { email, password } = req.body;
-    const username = email.split('@')[0];
+    const username = generateUsername(email);
 
     try {
-      let user = await User.findOne({ email });
-      if (user) {
+      const db = req.app.get('db'); 
+
+      const { rows: existing } = await db.query(
+        'SELECT user_id FROM users WHERE email = $1 OR username = $2',
+        [email, username]
+      );
+
+      if (existing.length > 0) {
         return res.status(400).json({ msg: 'User already exists' });
       }
 
-      user = new User({
-        username,
-        email,
-        password
-      });
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-      await user.save();
-
-      const payload = {
-        user: {
-          id: user.id
-        }
-      };
-
-      jwt.sign(
-        payload,
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' },
-        (err, token) => {
-          if (err) throw err;
-          res.json({ token });
-        }
+      // Insert user
+      const { rows } = await db.query(
+        `INSERT INTO users (username, email, password_hash, profile_picture_url) 
+         VALUES ($1, $2, $3, $4) 
+         RETURNING user_id, username, email, created_at`,
+        [
+          username,
+          email,
+          hashedPassword,
+          `https://i.pravatar.cc/150?u=${username}` 
+        ]
       );
+
+      const user = rows[0];
+
+      // Generate JWT
+      const token = jwt.sign(
+        { userId: user.user_id, username: user.username },
+        process.env.JWT_SECRET || 'your_jwt_secret_here',
+        { expiresIn: '7d' }
+      );
+
+      res.status(201).json({
+        token,
+        user: {
+          id: user.user_id,
+          username: user.username,
+          email: user.email,
+          profilePicture: `https://i.pravatar.cc/150?u=${user.username}`
+        }
+      });
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server error');
+      console.error('Signup error:', err);
+      res.status(500).json({ msg: 'Server error' });
     }
   }
 );
 
-// @route   POST /api/auth/login
-// @desc    Authenticate user & get token
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
 
-  try {
-    let user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ msg: 'Invalid credentials' });
+router.post('/login',
+  body('email').isEmail().normalizeEmail(),
+  body('password').exists(),
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(400).json({ msg: 'Invalid credentials' });
+    const { email, password } = req.body;
+
+    try {
+      const db = req.app.get('db');
+
+      // Find user by email
+      const { rows } = await db.query(
+        'SELECT user_id, username, password_hash FROM users WHERE email = $1',
+        [email]
+      );
+
+      if (rows.length === 0) {
+        return res.status(400).json({ msg: 'Invalid credentials' });
+      }
+
+      const user = rows[0];
+      const isMatch = await bcrypt.compare(password, user.password_hash);
+
+      if (!isMatch) {
+        return res.status(400).json({ msg: 'Invalid credentials' });
+      }
+
+      // Generate JWT
+      const token = jwt.sign(
+        { userId: user.user_id, username: user.username },
+        process.env.JWT_SECRET || 'your_jwt_secret_here',
+        { expiresIn: '7d' }
+      );
+
+      res.json({
+        token,
+        user: {
+          id: user.user_id,
+          username: user.username,
+          email: email,
+          profilePicture: `https://i.pravatar.cc/150?u=${user.username}`
+        }
+      });
+    } catch (err) {
+      console.error('Login error:', err);
+      res.status(500).json({ msg: 'Server error' });
     }
-
-    const payload = {
-      user: {
-        id: user.id
-      }
-    };
-
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' },
-      (err, token) => {
-        if (err) throw err;
-        res.json({ token });
-      }
-    );
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
   }
-});
+);
 
 module.exports = router;
