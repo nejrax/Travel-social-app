@@ -1,16 +1,19 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
 
-// @route   POST /api/auth/signup
-// @desc    Register user
-router.post('/signup', 
-  body('email').isEmail(),
-  body('password').isLength({ min: 8 }),
+const generateUsername = (email) => {
+  return email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+};
+
+
+router.post('/signup',
+  body('email').isEmail().normalizeEmail(),
+  body('password').isLength({ min: 8 }).matches(/^(?=.*[A-Za-z])(?=.*\d)/, 'i').withMessage('Password must contain letters and numbers'),
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -18,7 +21,7 @@ router.post('/signup',
     }
 
     const { email, password } = req.body;
-    const username = email.split('@')[0];
+    const username = generateUsername(email);
 
     try {
       const userCheck = await pool.query(
@@ -56,14 +59,13 @@ router.post('/signup',
         }
       );
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server error');
+      console.error('Signup error:', err);
+      res.status(500).json({ msg: 'Server error' });
     }
   }
 );
 
-// @route   POST /api/auth/login
-// @desc    Authenticate user & get token
+
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
