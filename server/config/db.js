@@ -1,13 +1,20 @@
-const mongoose = require('mongoose');
+const { Pool } = require('pg');
 
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('MongoDB connected successfully');
-  } catch (error) {
-    console.error('MongoDB connection error:', error.message);
-    process.exit(1);
-  }
-};
+const pool = new Pool({
+  user: process.env.DB_USER || 'habibaibrahim',
+  host: process.env.DB_HOST || 'localhost',
+  database: process.env.DB_NAME || 'travelapp',
+  password: process.env.DB_PASSWORD || 'strongpassword',
+  port: process.env.DB_PORT || 5432,
+});
 
-module.exports = connectDB;
+pool.on('connect', () => {
+  console.log('PostgreSQL connected successfully');
+});
+
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+  process.exit(-1);
+});
+
+module.exports = pool;

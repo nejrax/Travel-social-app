@@ -1,15 +1,8 @@
-
-
-
-
 import { useState, useEffect } from 'react';
 import { api } from './api';
 import SplashScreen from './components/SplashScreen';
 import LoginPage from './components/LoginPage';
 import HomePage from './components/HomePage';
-import MapPage from './components/MapPage';
-import CreatePostPage from './components/CreatePostPage';
-import NotificationsPage from './components/NotificationsPage';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('splash');
@@ -27,10 +20,22 @@ export default function App() {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [caption, setCaption] = useState('');
-  const [postLocation, setPostLocation] = useState('');
-  const [notifications, setNotifications] = useState([]);
+
+  const notifications = [
+    {
+      id: 1,
+      type: 'like',
+      user: {
+        name: 'Sarah Chen',
+        username: '@sarah_travels',
+        avatar: 'https://placehold.co/40x40/ec4899/ffffff?text=SC'
+      },
+      postImage: 'https://placehold.co/200x200/4f46e5/ffffff?text=Santorini',
+      postLocation: 'Santorini, Greece',
+      time: '2 hours ago',
+      read: false
+    }
+  ];
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -86,14 +91,6 @@ export default function App() {
     fetchLocations();
   }, []);
 
-  // Check if user is already logged in on mount
-  useEffect(() => {
-    const token = api.auth.getToken();
-    if (token) {
-      setIsAuthenticated(true);
-    }
-  }, []);
-
   // Handle splash screen animation
   useEffect(() => {
     if (currentPage === 'splash') {
@@ -116,69 +113,6 @@ export default function App() {
   const goToCreate = () => setCurrentPage('create');
   const goToFind = () => setCurrentPage('find');
   const goToNotifications = () => setCurrentPage('notifications');
-  const goToMap = () => setCurrentPage('map');
-  const goToSettings = () => setCurrentPage('settings');
-  const goBack = () => setCurrentPage('home');
-
-  // Handle sign out
-  const handleSignOut = () => {
-    api.auth.logout();
-    setIsAuthenticated(false);
-    setLoginEmail('');
-    setLoginPassword('');
-    goToLogin();
-  };
-
-  // Handle create post
-  const handleCreatePost = async (e) => {
-    e.preventDefault();
-    if (selectedImage && caption.trim() && postLocation.trim()) {
-      try {
-        setLoading(true);
-        const newPost = {
-          title: caption.substring(0, 50),
-          description: caption,
-          city: postLocation.split(',')[0].trim(),
-          googleMapsLink: 'https://maps.app.goo.gl/example',
-          price: 0,
-          image: selectedImage
-        };
-        await api.posts.create(newPost);
-        alert('Post created successfully!');
-        setSelectedImage(null);
-        setCaption('');
-        setPostLocation('');
-        goToHome();
-        
-        // Refresh posts
-        const data = await api.posts.getAll();
-        const formattedPosts = data.map(post => ({
-          id: post.post_id,
-          user: {
-            name: post.username,
-            username: `@${post.username}`,
-            avatar: `https://placehold.co/40x40/4f46e5/ffffff?text=${post.username.charAt(0).toUpperCase()}`
-          },
-          image: post.image_url,
-          caption: post.description,
-          location: post.city,
-          likes: 0,
-          comments: 0,
-          date: new Date(post.created_at).toLocaleDateString(),
-          isLiked: false,
-          title: post.title,
-          price: post.price,
-          googleMapsLink: post.google_maps_link
-        }));
-        setPosts(formattedPosts);
-      } catch (err) {
-        console.error('Error creating post:', err.message);
-        alert('Failed to create post: ' + err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
 
   // Handle login/signup
   const handleAuthSubmit = async (e) => {
@@ -225,46 +159,6 @@ export default function App() {
     );
   }
 
-  if (currentPage === 'map') {
-    return (
-      <MapPage
-        goBack={goBack}
-        goToProfile={goToProfile}
-        goToSettings={goToSettings}
-        goToNotifications={goToNotifications}
-        onSignOut={handleSignOut}
-        unreadCount={unreadCount}
-      />
-    );
-  }
-
-  if (currentPage === 'create') {
-    return (
-      <CreatePostPage
-        goBack={goBack}
-        selectedImage={selectedImage}
-        setSelectedImage={setSelectedImage}
-        caption={caption}
-        setCaption={setCaption}
-        location={postLocation}
-        setLocation={setPostLocation}
-        onSubmit={handleCreatePost}
-      />
-    );
-  }
-
-  if (currentPage === 'notifications') {
-    return (
-      <NotificationsPage
-        goBack={goBack}
-        notifications={notifications}
-        unreadCount={unreadCount}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-      />
-    );
-  }
-
   // Default to HomePage
   return (
     <HomePage
@@ -282,9 +176,6 @@ export default function App() {
       goToFind={goToFind}
       goToProfile={goToProfile}
       goToNotifications={goToNotifications}
-      goToSettings={goToSettings}
-      goToMap={goToMap}
-      onSignOut={handleSignOut}
     />
   );
 }

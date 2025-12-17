@@ -1,7 +1,7 @@
-
 const express = require('express');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const pool = require('../config/db');
 const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
@@ -24,51 +24,40 @@ router.post('/signup',
     const username = generateUsername(email);
 
     try {
-      const db = req.app.get('db'); 
-
-      const { rows: existing } = await db.query(
-        'SELECT user_id FROM users WHERE email = $1 OR username = $2',
-        [email, username]
+      const userCheck = await pool.query(
+        'SELECT * FROM users WHERE email = $1',
+        [email]
       );
 
-      if (existing.length > 0) {
+      if (userCheck.rows.length > 0) {
         return res.status(400).json({ msg: 'User already exists' });
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(password, salt);
 
-      // Insert user
-      const { rows } = await db.query(
-        `INSERT INTO users (username, email, password_hash, profile_picture_url) 
-         VALUES ($1, $2, $3, $4) 
-         RETURNING user_id, username, email, created_at`,
-        [
-          username,
-          email,
-          hashedPassword,
-          `https://i.pravatar.cc/150?u=${username}` 
-        ]
+      const result = await pool.query(
+        'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING user_id, username, email',
+        [username, email, passwordHash]
       );
 
-      const user = rows[0];
+      const user = result.rows[0];
 
-      // Generate JWT
-      const token = jwt.sign(
-        { userId: user.user_id, username: user.username },
-        process.env.JWT_SECRET || 'your_jwt_secret_here',
-        { expiresIn: '7d' }
-      );
-
-      res.status(201).json({
-        token,
+      const payload = {
         user: {
-          id: user.user_id,
-          username: user.username,
-          email: user.email,
-          profilePicture: `https://i.pravatar.cc/150?u=${user.username}`
+          id: user.user_id
         }
-      });
+      };
+
+      jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' },
+        (err, token) => {
+          if (err) throw err;
+          res.json({ token });
+        }
+      );
     } catch (err) {
       console.error('Signup error:', err);
       res.status(500).json({ msg: 'Server error' });
@@ -77,58 +66,45 @@ router.post('/signup',
 );
 
 
-router.post('/login',
-  body('email').isEmail().normalizeEmail(),
-  body('password').exists(),
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const result = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ msg: 'Invalid credentials' });
     }
 
-    const { email, password } = req.body;
+    const user = result.rows[0];
 
-    try {
-      const db = req.app.get('db');
-
-      // Find user by email
-      const { rows } = await db.query(
-        'SELECT user_id, username, password_hash FROM users WHERE email = $1',
-        [email]
-      );
-
-      if (rows.length === 0) {
-        return res.status(400).json({ msg: 'Invalid credentials' });
-      }
-
-      const user = rows[0];
-      const isMatch = await bcrypt.compare(password, user.password_hash);
-
-      if (!isMatch) {
-        return res.status(400).json({ msg: 'Invalid credentials' });
-      }
-
-      // Generate JWT
-      const token = jwt.sign(
-        { userId: user.user_id, username: user.username },
-        process.env.JWT_SECRET || 'your_jwt_secret_here',
-        { expiresIn: '7d' }
-      );
-
-      res.json({
-        token,
-        user: {
-          id: user.user_id,
-          username: user.username,
-          email: email,
-          profilePicture: `https://i.pravatar.cc/150?u=${user.username}`
-        }
-      });
-    } catch (err) {
-      console.error('Login error:', err);
-      res.status(500).json({ msg: 'Server error' });
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
+      return res.status(400).json({ msg: 'Invalid credentials' });
     }
+
+    const payload = {
+      user: {
+        id: user.user_id
+      }
+    };
+
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' },
+      (err, token) => {
+        if (err) throw err;
+        res.json({ token });
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
   }
-);
+});
 
 module.exports = router;
