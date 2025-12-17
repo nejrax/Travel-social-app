@@ -10,6 +10,8 @@ import HomePage from './components/HomePage';
 import MapPage from './components/MapPage';
 import CreatePostPage from './components/CreatePostPage';
 import NotificationsPage from './components/NotificationsPage';
+import ProfilePage from './components/ProfilePage';
+import SettingsPage from './components/SettingsPage';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('splash');
@@ -33,6 +35,8 @@ export default function App() {
   const [notifications, setNotifications] = useState([]);
   const [expandedComments, setExpandedComments] = useState({});
   const [postComments, setPostComments] = useState({});
+  const [userProfile, setUserProfile] = useState(null);
+  const [userPosts, setUserPosts] = useState([]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -122,6 +126,25 @@ export default function App() {
     fetchNotifications();
   }, [isAuthenticated, currentPage]);
 
+  // Fetch user profile and posts
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (isAuthenticated) {
+        try {
+          const profile = await api.auth.getProfile();
+          setUserProfile(profile);
+          
+          const posts = await api.auth.getUserPosts();
+          setUserPosts(posts);
+        } catch (err) {
+          console.error('Error fetching user profile:', err);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [isAuthenticated]);
+
   // Check if user is already logged in on mount
   useEffect(() => {
     const token = api.auth.getToken();
@@ -178,6 +201,21 @@ export default function App() {
       );
     } catch (err) {
       console.error('Error marking notifications as read:', err);
+    }
+  };
+
+  // Handle update profile
+  const handleUpdateProfile = async (profileData) => {
+    try {
+      const updatedProfile = await api.auth.updateProfile(profileData);
+      setUserProfile(updatedProfile);
+      
+      // Refresh user posts
+      const posts = await api.auth.getUserPosts();
+      setUserPosts(posts);
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      throw err;
     }
   };
 
@@ -430,6 +468,29 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onMarkAllAsRead={handleMarkAllAsRead}
+      />
+    );
+  }
+
+  if (currentPage === 'profile') {
+    return (
+      <ProfilePage
+        goBack={goBack}
+        goToSettings={goToSettings}
+        onSignOut={handleSignOut}
+        user={userProfile}
+        userPosts={userPosts}
+        onUpdateProfile={handleUpdateProfile}
+      />
+    );
+  }
+
+  if (currentPage === 'settings') {
+    return (
+      <SettingsPage
+        goBack={goBack}
+        onSignOut={handleSignOut}
+        user={userProfile}
       />
     );
   }

@@ -40,6 +40,54 @@ export const api = {
       return data;
     },
 
+    getProfile: async () => {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+        headers: {
+          'x-auth-token': token,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile');
+      }
+      
+      return response.json();
+    },
+
+    updateProfile: async (profileData) => {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token,
+        },
+        body: JSON.stringify(profileData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+      
+      return response.json();
+    },
+
+    getUserPosts: async () => {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/auth/profile/posts`, {
+        headers: {
+          'x-auth-token': token,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user posts');
+      }
+      
+      return response.json();
+    },
+
     logout: () => {
       localStorage.removeItem('token');
     },
