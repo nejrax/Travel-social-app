@@ -31,6 +31,8 @@ export default function App() {
   const [caption, setCaption] = useState('');
   const [postLocation, setPostLocation] = useState('');
   const [notifications, setNotifications] = useState([]);
+  const [expandedComments, setExpandedComments] = useState({});
+  const [postComments, setPostComments] = useState({});
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -50,8 +52,8 @@ export default function App() {
           image: post.image_url,
           caption: post.description,
           location: post.city,
-          likes: 0,
-          comments: 0,
+          likes: parseInt(post.likes_count) || 0,
+          comments: parseInt(post.comments_count) || 0,
           date: new Date(post.created_at).toLocaleDateString(),
           isLiked: false,
           title: post.title,
@@ -85,6 +87,40 @@ export default function App() {
 
     fetchLocations();
   }, []);
+
+  // Fetch notifications from API
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (isAuthenticated) {
+        try {
+          console.log('Fetching notifications...');
+          const data = await api.notifications.getAll();
+          console.log('Notifications received:', data);
+          const formattedNotifications = data.map(notif => ({
+            id: notif.notification_id,
+            type: notif.type,
+            user: {
+              name: notif.actor_username,
+              username: `@${notif.actor_username}`,
+              avatar: notif.actor_avatar || `https://placehold.co/40x40/4f46e5/ffffff?text=${notif.actor_username.charAt(0).toUpperCase()}`
+            },
+            post: notif.post_title ? {
+              title: notif.post_title,
+              image: notif.post_image
+            } : null,
+            time: new Date(notif.created_at).toLocaleString(),
+            read: notif.is_read
+          }));
+          console.log('Formatted notifications:', formattedNotifications);
+          setNotifications(formattedNotifications);
+        } catch (err) {
+          console.error('Error fetching notifications:', err);
+        }
+      }
+    };
+
+    fetchNotifications();
+  }, [isAuthenticated, currentPage]);
 
   // Check if user is already logged in on mount
   useEffect(() => {
@@ -129,6 +165,137 @@ export default function App() {
     goToLogin();
   };
 
+  // Handle mark all notifications as read
+  const handleMarkAllAsRead = async () => {
+    try {
+      await api.notifications.markAllAsRead();
+      // Update local state to mark all as read
+      setNotifications(prevNotifications => 
+        prevNotifications.map(notif => ({
+          ...notif,
+          read: true
+        }))
+      );
+    } catch (err) {
+      console.error('Error marking notifications as read:', err);
+    }
+  };
+
+  // Handle like post with optimistic UI
+  const handleLikePost = async (postId) => {
+    // Store the current state before optimistic update
+    const currentPost = posts.find(p => p.id === postId);
+    const wasLiked = currentPost?.isLiked || false;
+    const currentLikes = currentPost?.likes || 0;
+
+    try {
+      // Optimistic UI update - instant feedback
+      setPosts(prevPosts => prevPosts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            isLiked: !wasLiked,
+            likes: wasLiked ? currentLikes - 1 : currentLikes + 1
+          };
+        }
+        return post;
+      }));
+
+      // Make API call
+      const result = await api.posts.like(postId);
+      console.log('Like result:', result);
+    } catch (err) {
+      console.error('Error liking post:', err);
+      // Revert optimistic update on error
+      setPosts(prevPosts => prevPosts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            isLiked: wasLiked,
+            likes: currentLikes
+          };
+        }
+        return post;
+      }));
+      // Don't show alert, just log error
+      console.error('Failed to like post:', err.message);
+    }
+  };
+
+  // Handle toggle comments
+  const handleToggleComments = async (postId) => {
+    // Toggle expanded state
+    setExpandedComments(prev => ({
+      ...prev,
+      [postId]: !prev[postId]
+    }));
+
+    // Fetch comments if not already loaded and expanding
+    if (!expandedComments[postId] && !postComments[postId]) {
+      try {
+        const comments = await api.posts.getComments(postId);
+        const formattedComments = comments.map(comment => ({
+          id: comment.comment_id,
+          text: comment.comment_text,
+          user: {
+            name: comment.username,
+            username: `@${comment.username}`,
+            avatar: comment.profile_picture_url || `https://placehold.co/40x40/4f46e5/ffffff?text=${comment.username.charAt(0).toUpperCase()}`
+          },
+          time: new Date(comment.created_at).toLocaleString(),
+          parentId: comment.parent_comment_id
+        }));
+        setPostComments(prev => ({
+          ...prev,
+          [postId]: formattedComments
+        }));
+      } catch (err) {
+        console.error('Error fetching comments:', err);
+      }
+    }
+  };
+
+  // Handle add comment
+  const handleAddComment = async (postId, commentText) => {
+    if (!commentText.trim()) return;
+
+    try {
+      await api.posts.addComment(postId, commentText);
+      
+      // Refresh comments for this post
+      const comments = await api.posts.getComments(postId);
+      const formattedComments = comments.map(comment => ({
+        id: comment.comment_id,
+        text: comment.comment_text,
+        user: {
+          name: comment.username,
+          username: `@${comment.username}`,
+          avatar: comment.profile_picture_url || `https://placehold.co/40x40/4f46e5/ffffff?text=${comment.username.charAt(0).toUpperCase()}`
+        },
+        time: new Date(comment.created_at).toLocaleString(),
+        parentId: comment.parent_comment_id
+      }));
+      setPostComments(prev => ({
+        ...prev,
+        [postId]: formattedComments
+      }));
+
+      // Update comment count in posts
+      setPosts(prevPosts => prevPosts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            comments: post.comments + 1
+          };
+        }
+        return post;
+      }));
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      alert(err.message);
+    }
+  };
+
   // Handle create post
   const handleCreatePost = async (e) => {
     e.preventDefault();
@@ -162,8 +329,8 @@ export default function App() {
           image: post.image_url,
           caption: post.description,
           location: post.city,
-          likes: 0,
-          comments: 0,
+          likes: parseInt(post.likes_count) || 0,
+          comments: parseInt(post.comments_count) || 0,
           date: new Date(post.created_at).toLocaleDateString(),
           isLiked: false,
           title: post.title,
@@ -234,6 +401,7 @@ export default function App() {
         goToNotifications={goToNotifications}
         onSignOut={handleSignOut}
         unreadCount={unreadCount}
+        posts={posts}
       />
     );
   }
@@ -261,6 +429,7 @@ export default function App() {
         unreadCount={unreadCount}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        onMarkAllAsRead={handleMarkAllAsRead}
       />
     );
   }
@@ -285,6 +454,11 @@ export default function App() {
       goToSettings={goToSettings}
       goToMap={goToMap}
       onSignOut={handleSignOut}
+      onLikePost={handleLikePost}
+      onToggleComments={handleToggleComments}
+      onAddComment={handleAddComment}
+      expandedComments={expandedComments}
+      postComments={postComments}
     />
   );
 }

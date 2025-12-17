@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import UserDropdown from './UserDropdown';
 
+import { useState } from 'react';
+
 export default function HomePage({ 
   posts, 
   loading, 
@@ -22,8 +24,30 @@ export default function HomePage({
   goToNotifications,
   goToSettings,
   goToMap,
-  onSignOut
+  onSignOut,
+  onLikePost,
+  onToggleComments,
+  onAddComment,
+  expandedComments,
+  postComments
 }) {
+  const [commentInputs, setCommentInputs] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter posts based on search query
+  const filteredPosts = posts.filter(post => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      post.caption?.toLowerCase().includes(query) ||
+      post.location?.toLowerCase().includes(query) ||
+      post.user?.name?.toLowerCase().includes(query) ||
+      post.user?.username?.toLowerCase().includes(query) ||
+      post.title?.toLowerCase().includes(query) ||
+      post.city?.toLowerCase().includes(query)
+    );
+  });
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
       <div className="absolute inset-0 opacity-20">
@@ -43,8 +67,12 @@ export default function HomePage({
           className="flex items-center justify-between py-6 relative z-20"
         >
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-              <Camera className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
+              <img 
+                src="/logo.png" 
+                alt="TravelConnect Logo" 
+                className="w-full h-full object-cover scale-125"
+              />
             </div>
             <h1 className="text-2xl font-bold text-white hidden sm:block">
               <span className="text-blue-300">Travel</span>
@@ -153,6 +181,8 @@ export default function HomePage({
             <input
               type="text"
               placeholder="Search destinations, locations, or users..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 py-3 bg-transparent border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
             />
           </div>
@@ -166,8 +196,6 @@ export default function HomePage({
         >
           {[
             { id: 'all', name: 'All Posts', icon: Globe },
-            { id: 'popular', name: 'Popular', icon: Star },
-            { id: 'nearby', name: 'Nearby', icon: Navigation },
             { id: 'trending', name: 'Trending', icon: Compass }
           ].map((filter) => {
             const IconComponent = filter.icon;
@@ -223,7 +251,7 @@ export default function HomePage({
         )}
 
         <div className="space-y-6">
-          {!loading && !error && posts.map((post, index) => (
+          {!loading && !error && filteredPosts.map((post, index) => (
             <motion.article
               key={post.id}
               initial={{ opacity: 0, y: 20 }}
@@ -258,13 +286,19 @@ export default function HomePage({
               <div className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-4">
-                    <button className={`flex items-center space-x-1 p-2 rounded-full transition-colors ${
-                      post.isLiked ? 'text-red-400' : 'text-blue-200 hover:text-red-400'
-                    }`}>
+                    <button 
+                      onClick={() => onLikePost && onLikePost(post.id)}
+                      className={`flex items-center space-x-1 p-2 rounded-full transition-colors ${
+                        post.isLiked ? 'text-red-400' : 'text-blue-200 hover:text-red-400'
+                      }`}
+                    >
                       <Heart className={`w-5 h-5 ${post.isLiked ? 'fill-current' : ''}`} />
                       <span className="text-white">{post.likes.toLocaleString()}</span>
                     </button>
-                    <button className="flex items-center space-x-1 text-blue-200 hover:text-white p-2 rounded-full transition-colors">
+                    <button 
+                      onClick={() => onToggleComments && onToggleComments(post.id)}
+                      className="flex items-center space-x-1 text-blue-200 hover:text-white p-2 rounded-full transition-colors"
+                    >
                       <MessageCircle className="w-5 h-5" />
                       <span className="text-white">{post.comments}</span>
                     </button>
@@ -276,6 +310,72 @@ export default function HomePage({
 
                 <p className="text-white mb-2 leading-relaxed">{post.caption}</p>
                 <p className="text-blue-300 text-sm">{post.date}</p>
+
+                {/* Comments Section */}
+                {expandedComments[post.id] && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <h4 className="text-white font-semibold mb-3">Comments ({post.comments})</h4>
+                    {postComments[post.id] && postComments[post.id].length > 0 ? (
+                      <div className="space-y-3 mb-4">
+                        {postComments[post.id].map(comment => (
+                          <div key={comment.id} className="flex space-x-3">
+                            <img
+                              src={comment.user.avatar}
+                              alt={comment.user.name}
+                              className="w-8 h-8 rounded-full flex-shrink-0"
+                            />
+                            <div className="flex-1">
+                              <div className="bg-white/5 rounded-lg p-3">
+                                <p className="text-white font-medium text-sm">{comment.user.name}</p>
+                                <p className="text-blue-100 text-sm mt-1">{comment.text}</p>
+                              </div>
+                              <p className="text-blue-300 text-xs mt-1">{comment.time}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-blue-300 text-sm mb-4">No comments yet. Be the first to comment!</p>
+                    )}
+
+                    {/* Add Comment Input */}
+                    <div className="flex space-x-3 mt-4">
+                      <input
+                        type="text"
+                        placeholder="What do you think of this?"
+                        value={commentInputs[post.id] || ''}
+                        onChange={(e) => setCommentInputs(prev => ({
+                          ...prev,
+                          [post.id]: e.target.value
+                        }))}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && commentInputs[post.id]?.trim()) {
+                            onAddComment && onAddComment(post.id, commentInputs[post.id]);
+                            setCommentInputs(prev => ({
+                              ...prev,
+                              [post.id]: ''
+                            }));
+                          }
+                        }}
+                        className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-blue-300 focus:outline-none focus:border-blue-400 focus:bg-white/15 transition-all"
+                      />
+                      <button
+                        onClick={() => {
+                          if (commentInputs[post.id]?.trim()) {
+                            onAddComment && onAddComment(post.id, commentInputs[post.id]);
+                            setCommentInputs(prev => ({
+                              ...prev,
+                              [post.id]: ''
+                            }));
+                          }
+                        }}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-orange-600 transition-all"
+                      >
+                        Post
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.article>
           ))}

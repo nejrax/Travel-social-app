@@ -1,13 +1,21 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, Heart, MessageCircle, MapPin, Check, UserPlus, AtSign, Camera } from 'lucide-react';
+import { useEffect } from 'react';
 
 export default function NotificationsPage({ 
   goBack, 
   notifications, 
   unreadCount,
   activeTab,
-  setActiveTab
+  setActiveTab,
+  onMarkAllAsRead
 }) {
+  // Mark all notifications as read when page opens
+  useEffect(() => {
+    if (unreadCount > 0 && onMarkAllAsRead) {
+      onMarkAllAsRead();
+    }
+  }, []);
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'like':
@@ -67,17 +75,8 @@ export default function NotificationsPage({
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="text-center relative">
+          <div className="text-center">
             <h2 className="text-2xl font-bold text-white">Notifications</h2>
-            {unreadCount > 0 && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center"
-              >
-                {unreadCount}
-              </motion.span>
-            )}
           </div>
           <div className="w-10"></div>
         </motion.header>
