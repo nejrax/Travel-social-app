@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const pool = require('../config/db');
-const auth = require('../middleware/authMiddleware');
+const auth = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -35,7 +35,9 @@ router.get('/', async (req, res) => {
     const result = await pool.query(
       `SELECT p.post_id, p.user_id, u.username, p.title, p.description, 
               c.city_name as city, p.image_url, p.google_maps_link, p.price, 
-              p.created_at, p.updated_at
+              p.created_at, p.updated_at,
+              (SELECT COUNT(*) FROM likes WHERE post_id = p.post_id) as likes_count,
+              (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comments_count
        FROM posts p
        JOIN users u ON p.user_id = u.user_id
        JOIN cities c ON p.city_id = c.city_id
@@ -100,6 +102,91 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING post_id, user_id, city_id, title, description, image_url, google_maps_link, price, created_at`,
       [req.user.id, cityId, title, description, imageUrl, googleMapsLink, price ? parseFloat(price) : 0]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// @route   POST /api/posts/:id/like
+// @desc    Like/unlike a post
+// @access  Private
+router.post('/:id/like', auth, async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const userId = req.user.id;
+
+    // Check if already liked
+    const existingLike = await pool.query(
+      'SELECT * FROM likes WHERE user_id = $1 AND post_id = $2',
+      [userId, postId]
+    );
+
+    if (existingLike.rows.length > 0) {
+      // Unlike - remove the like
+      await pool.query(
+        'DELETE FROM likes WHERE user_id = $1 AND post_id = $2',
+        [userId, postId]
+      );
+      res.json({ msg: 'Post unliked', liked: false });
+    } else {
+      // Like - add the like
+      await pool.query(
+        'INSERT INTO likes (user_id, post_id) VALUES ($1, $2)',
+        [userId, postId]
+      );
+      res.json({ msg: 'Post liked', liked: true });
+    }
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// @route   GET /api/posts/:id/comments
+// @desc    Get comments for a post
+// @access  Public
+router.get('/:id/comments', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+        c.comment_id,
+        c.comment_text,
+        c.parent_comment_id,
+        c.created_at,
+        u.user_id,
+        u.username,
+        u.profile_picture_url
+       FROM comments c
+       JOIN users u ON c.user_id = u.user_id
+       WHERE c.post_id = $1
+       ORDER BY c.created_at ASC`,
+      [req.params.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// @route   POST /api/posts/:id/comments
+// @desc    Add a comment to a post
+// @access  Private
+router.post('/:id/comments', auth, async (req, res) => {
+  try {
+    const { comment_text, parent_comment_id } = req.body;
+    const postId = req.params.id;
+    const userId = req.user.id;
+
+    const result = await pool.query(
+      `INSERT INTO comments (post_id, user_id, comment_text, parent_comment_id)
+       VALUES ($1, $2, $3, $4)
+       RETURNING comment_id, post_id, user_id, comment_text, parent_comment_id, created_at`,
+      [postId, userId, comment_text, parent_comment_id || null]
     );
 
     res.json(result.rows[0]);

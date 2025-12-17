@@ -6,6 +6,7 @@ const pool = require('./config/db');
 const authRoutes = require('./routes/auth');
 const postRoutes = require('./routes/posts');
 const locationRoutes = require('./routes/locations');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,6 +29,7 @@ pool.query('SELECT NOW()', (err, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/locations', locationRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

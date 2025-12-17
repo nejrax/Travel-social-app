@@ -101,6 +101,63 @@ export const api = {
       }
       
       return await response.json();
+    },
+
+    like: async (postId) => {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('You must be logged in to like a post');
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/posts/${postId}/like`, {
+        method: 'POST',
+        headers: {
+          'x-auth-token': token,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to like post');
+      }
+      
+      return await response.json();
+    },
+
+    getComments: async (postId) => {
+      const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch comments');
+      }
+      
+      return await response.json();
+    },
+
+    addComment: async (postId, commentText, parentCommentId = null) => {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('You must be logged in to comment');
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token,
+        },
+        body: JSON.stringify({
+          comment_text: commentText,
+          parent_comment_id: parentCommentId
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to add comment');
+      }
+      
+      return await response.json();
     }
   },
 
@@ -120,6 +177,70 @@ export const api = {
       
       if (!response.ok) {
         throw new Error('Failed to fetch cities');
+      }
+      
+      return await response.json();
+    }
+  },
+
+  notifications: {
+    getAll: async () => {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('You must be logged in to view notifications');
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/notifications`, {
+        headers: {
+          'x-auth-token': token,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch notifications');
+      }
+      
+      return await response.json();
+    },
+
+    markAsRead: async (notificationId) => {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('You must be logged in');
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
+        method: 'PUT',
+        headers: {
+          'x-auth-token': token,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to mark notification as read');
+      }
+      
+      return await response.json();
+    },
+
+    markAllAsRead: async () => {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('You must be logged in');
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+        method: 'PUT',
+        headers: {
+          'x-auth-token': token,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to mark all notifications as read');
       }
       
       return await response.json();

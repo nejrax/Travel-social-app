@@ -34,8 +34,12 @@ export default function LoginPage({
       >
         <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
           <div className="text-center mb-8">
-            <div className="mx-auto w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mb-4">
-              <Camera className="w-12 h-12 text-white" />
+            <div className="mx-auto w-24 h-24 rounded-full flex items-center justify-center mb-4 overflow-hidden">
+              <img 
+                src="/logo.png" 
+                alt="TravelConnect Logo" 
+                className="w-full h-full object-cover scale-125"
+              />
             </div>
             <h1 className="text-3xl font-bold text-white">
               <span className="text-blue-300">Travel</span>

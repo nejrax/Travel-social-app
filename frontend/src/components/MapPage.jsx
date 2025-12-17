@@ -1,8 +1,110 @@
 import { motion } from 'framer-motion';
 import { Map, MapPin, Navigation, Globe, ArrowLeft, Camera, Bell, User } from 'lucide-react';
 import UserDropdown from './UserDropdown';
+import { useEffect, useRef } from 'react';
 
-export default function MapPage({ goBack, goToProfile, goToSettings, goToNotifications, onSignOut, unreadCount }) {
+export default function MapPage({ goBack, goToProfile, goToSettings, goToNotifications, onSignOut, unreadCount, posts }) {
+  const mapRef = useRef(null);
+  const googleMapRef = useRef(null);
+
+  useEffect(() => {
+    // Load Google Maps script
+    if (!window.google) {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCKCvBfZPyFGMxx4MWQOZwVOGLeNcYJB2c`;
+      script.async = true;
+      script.defer = true;
+      script.onload = initMap;
+      document.head.appendChild(script);
+    } else {
+      initMap();
+    }
+  }, [posts]);
+
+  const initMap = () => {
+    if (!mapRef.current || !window.google) return;
+
+    // Create map centered on Europe (good view of Balkans)
+    const map = new window.google.maps.Map(mapRef.current, {
+      center: { lat: 44.0, lng: 18.0 }, // Center on Balkans region
+      zoom: 6,
+      styles: [
+        {
+          featureType: 'all',
+          elementType: 'geometry',
+          stylers: [{ color: '#242f3e' }]
+        },
+        {
+          featureType: 'all',
+          elementType: 'labels.text.stroke',
+          stylers: [{ color: '#242f3e' }]
+        },
+        {
+          featureType: 'all',
+          elementType: 'labels.text.fill',
+          stylers: [{ color: '#746855' }]
+        },
+        {
+          featureType: 'water',
+          elementType: 'geometry',
+          stylers: [{ color: '#17263c' }]
+        }
+      ]
+    });
+
+    googleMapRef.current = map;
+
+    // Add markers for each post location
+    if (posts && posts.length > 0) {
+      posts.forEach(post => {
+        // You would need actual coordinates here
+        // For now, using approximate coordinates for Balkan cities
+        const cityCoords = getCityCoordinates(post.location || post.city);
+        
+        if (cityCoords) {
+          const marker = new window.google.maps.Marker({
+            position: cityCoords,
+            map: map,
+            title: post.title || post.caption,
+            icon: {
+              url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+            }
+          });
+
+          // Add info window
+          const infoWindow = new window.google.maps.InfoWindow({
+            content: `
+              <div style="padding: 10px; max-width: 200px;">
+                <h3 style="margin: 0 0 5px 0; font-size: 14px; font-weight: bold;">${post.title || post.caption}</h3>
+                <p style="margin: 0; font-size: 12px; color: #666;">${post.location || post.city}</p>
+                <p style="margin: 5px 0 0 0; font-size: 11px;">${post.user?.name || 'Anonymous'}</p>
+              </div>
+            `
+          });
+
+          marker.addListener('click', () => {
+            infoWindow.open(map, marker);
+          });
+        }
+      });
+    }
+  };
+
+  const getCityCoordinates = (cityName) => {
+    // Approximate coordinates for major Balkan cities
+    const cityCoords = {
+      'Sarajevo': { lat: 43.8563, lng: 18.4131 },
+      'Dubrovnik': { lat: 42.6507, lng: 18.0944 },
+      'Kotor': { lat: 42.4247, lng: 18.7712 },
+      'Belgrade': { lat: 44.7866, lng: 20.4489 },
+      'Zagreb': { lat: 45.8150, lng: 15.9819 },
+      'Ljubljana': { lat: 46.0569, lng: 14.5058 },
+      'Split': { lat: 43.5081, lng: 16.4402 },
+      'Mostar': { lat: 43.3438, lng: 17.8078 }
+    };
+
+    return cityCoords[cityName] || null;
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
       <div className="absolute inset-0 opacity-20">
@@ -74,38 +176,37 @@ export default function MapPage({ goBack, goToProfile, goToSettings, goToNotific
             </p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 min-h-[600px] flex flex-col items-center justify-center">
-            <Map className="w-24 h-24 text-blue-300 mb-6" />
-            <h3 className="text-2xl font-semibold text-white mb-3">Interactive World Map</h3>
-            <p className="text-blue-200 text-center max-w-md mb-6">
-              This feature is coming soon! You'll be able to explore posts by location, 
-              see trending destinations, and discover new places to visit.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 w-full max-w-3xl">
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 text-center">
-                <MapPin className="w-8 h-8 text-orange-400 mx-auto mb-3" />
-                <h4 className="text-white font-semibold mb-2">Location Pins</h4>
-                <p className="text-blue-200 text-sm">
-                  See posts from specific locations on the map
-                </p>
-              </div>
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl overflow-hidden border border-white/20">
+            <div 
+              ref={mapRef}
+              className="w-full h-[600px]"
+              style={{ minHeight: '600px' }}
+            />
+          </div>
 
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 text-center">
-                <Navigation className="w-8 h-8 text-blue-400 mx-auto mb-3" />
-                <h4 className="text-white font-semibold mb-2">Navigation</h4>
-                <p className="text-blue-200 text-sm">
-                  Navigate to different regions and countries
-                </p>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 text-center">
+              <MapPin className="w-8 h-8 text-orange-400 mx-auto mb-3" />
+              <h4 className="text-white font-semibold mb-2">Location Pins</h4>
+              <p className="text-blue-200 text-sm">
+                Click on pins to see posts from specific locations
+              </p>
+            </div>
 
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 text-center">
-                <Globe className="w-8 h-8 text-green-400 mx-auto mb-3" />
-                <h4 className="text-white font-semibold mb-2">Global View</h4>
-                <p className="text-blue-200 text-sm">
-                  Explore travel content from around the world
-                </p>
-              </div>
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 text-center">
+              <Navigation className="w-8 h-8 text-blue-400 mx-auto mb-3" />
+              <h4 className="text-white font-semibold mb-2">Navigation</h4>
+              <p className="text-blue-200 text-sm">
+                Zoom and pan to explore different regions
+              </p>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 text-center">
+              <Globe className="w-8 h-8 text-green-400 mx-auto mb-3" />
+              <h4 className="text-white font-semibold mb-2">Global View</h4>
+              <p className="text-blue-200 text-sm">
+                Discover travel content from around the world
+              </p>
             </div>
           </div>
         </motion.div>
