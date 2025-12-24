@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const auth = require('../middleware/auth');
 
@@ -9,7 +10,7 @@ const router = express.Router();
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, path.join(__dirname, '..', 'uploads'));
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
@@ -32,16 +33,32 @@ const upload = multer({
 // @desc    Get all posts
 router.get('/', async (req, res) => {
   try {
+    let userId = null;
+    const token = req.headers['x-auth-token'];
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.user?.id || decoded.userId || null;
+      } catch (err) {
+        userId = null;
+      }
+    }
+
     const result = await pool.query(
       `SELECT p.post_id, p.user_id, u.username, p.title, p.description, 
               c.city_name as city, p.image_url, p.google_maps_link, p.price, 
               p.created_at, p.updated_at,
               (SELECT COUNT(*) FROM likes WHERE post_id = p.post_id) as likes_count,
+              EXISTS(
+                SELECT 1 FROM likes l 
+                WHERE l.post_id = p.post_id AND l.user_id = $1
+              ) as is_liked,
               (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comments_count
        FROM posts p
        JOIN users u ON p.user_id = u.user_id
        JOIN cities c ON p.city_id = c.city_id
-       ORDER BY p.created_at DESC`
+       ORDER BY p.created_at DESC`,
+      [userId]
     );
     res.json(result.rows);
   } catch (err) {
@@ -54,16 +71,33 @@ router.get('/', async (req, res) => {
 // @desc    Get posts by city
 router.get('/:city', async (req, res) => {
   try {
+    let userId = null;
+    const token = req.headers['x-auth-token'];
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.user?.id || decoded.userId || null;
+      } catch (err) {
+        userId = null;
+      }
+    }
+
     const result = await pool.query(
       `SELECT p.post_id, p.user_id, u.username, p.title, p.description, 
               c.city_name as city, p.image_url, p.google_maps_link, p.price, 
-              p.created_at, p.updated_at
+              p.created_at, p.updated_at,
+              (SELECT COUNT(*) FROM likes WHERE post_id = p.post_id) as likes_count,
+              EXISTS(
+                SELECT 1 FROM likes l 
+                WHERE l.post_id = p.post_id AND l.user_id = $2
+              ) as is_liked,
+              (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comments_count
        FROM posts p
        JOIN users u ON p.user_id = u.user_id
        JOIN cities c ON p.city_id = c.city_id
        WHERE c.city_name = $1
        ORDER BY p.created_at DESC`,
-      [req.params.city]
+      [req.params.city, userId]
     );
     res.json(result.rows);
   } catch (err) {
@@ -84,7 +118,12 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
       price
     } = req.body;
 
-    const imageUrl = `/uploads/${req.file.filename}`;
+    if (!req.file) {
+      return res.status(400).json({ msg: 'Image file is required' });
+    }
+
+    const imagePath = `/uploads/${req.file.filename}`;
+    const imageUrl = `${req.protocol}://${req.get('host')}${imagePath}`;
 
     const cityResult = await pool.query(
       'SELECT city_id FROM cities WHERE city_name = $1',
@@ -131,14 +170,22 @@ router.post('/:id/like', auth, async (req, res) => {
         'DELETE FROM likes WHERE user_id = $1 AND post_id = $2',
         [userId, postId]
       );
-      res.json({ msg: 'Post unliked', liked: false });
+      const likesCountResult = await pool.query(
+        'SELECT COUNT(*)::int as likes_count FROM likes WHERE post_id = $1',
+        [postId]
+      );
+      res.json({ msg: 'Post unliked', liked: false, likes_count: likesCountResult.rows[0].likes_count });
     } else {
       // Like - add the like
       await pool.query(
         'INSERT INTO likes (user_id, post_id) VALUES ($1, $2)',
         [userId, postId]
       );
-      res.json({ msg: 'Post liked', liked: true });
+      const likesCountResult = await pool.query(
+        'SELECT COUNT(*)::int as likes_count FROM likes WHERE post_id = $1',
+        [postId]
+      );
+      res.json({ msg: 'Post liked', liked: true, likes_count: likesCountResult.rows[0].likes_count });
     }
   } catch (err) {
     console.error(err.message);

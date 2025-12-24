@@ -99,7 +99,10 @@ export const api = {
 
   posts: {
     getAll: async () => {
-      const response = await fetch(`${API_BASE_URL}/posts`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/posts`, {
+        headers: token ? { 'x-auth-token': token } : undefined,
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch posts');
@@ -109,7 +112,10 @@ export const api = {
     },
 
     getByCity: async (city) => {
-      const response = await fetch(`${API_BASE_URL}/posts/${city}`);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/posts/${city}`, {
+        headers: token ? { 'x-auth-token': token } : undefined,
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch posts by city');

@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import UserDropdown from './UserDropdown';
 
+const API_ORIGIN = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+
 export default function ProfilePage({ 
   goBack, 
   goToSettings, 
@@ -294,7 +296,7 @@ export default function ProfilePage({
                   userPosts.map((post) => (
                     <div key={post.id} className="relative aspect-square group cursor-pointer">
                       <img
-                        src={post.image}
+                        src={typeof post.image === 'string' && post.image.startsWith('/uploads/') ? `${API_ORIGIN}${post.image}` : post.image}
                         alt={post.caption}
                         className="w-full h-full object-cover rounded-lg"
                       />

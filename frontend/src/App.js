@@ -59,7 +59,7 @@ export default function App() {
           likes: parseInt(post.likes_count) || 0,
           comments: parseInt(post.comments_count) || 0,
           date: new Date(post.created_at).toLocaleDateString(),
-          isLiked: false,
+          isLiked: post.is_liked === true || post.is_liked === 'true' || post.is_liked === 1 || post.is_liked === '1',
           title: post.title,
           price: post.price,
           googleMapsLink: post.google_maps_link
@@ -241,7 +241,19 @@ export default function App() {
 
       // Make API call
       const result = await api.posts.like(postId);
-      console.log('Like result:', result);
+      const nextLikesCount = Number.parseInt(result?.likes_count, 10);
+      if (!Number.isNaN(nextLikesCount)) {
+        setPosts(prevPosts => prevPosts.map(post => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              likes: nextLikesCount,
+              isLiked: !!result.liked
+            };
+          }
+          return post;
+        }));
+      }
     } catch (err) {
       console.error('Error liking post:', err);
       // Revert optimistic update on error
@@ -370,7 +382,7 @@ export default function App() {
           likes: parseInt(post.likes_count) || 0,
           comments: parseInt(post.comments_count) || 0,
           date: new Date(post.created_at).toLocaleDateString(),
-          isLiked: false,
+          isLiked: post.is_liked === true || post.is_liked === 'true' || post.is_liked === 1 || post.is_liked === '1',
           title: post.title,
           price: post.price,
           googleMapsLink: post.google_maps_link

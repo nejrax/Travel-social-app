@@ -5,7 +5,9 @@ import {
 } from 'lucide-react';
 import UserDropdown from './UserDropdown';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+const API_ORIGIN = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
 
 export default function HomePage({ 
   posts, 
@@ -33,6 +35,7 @@ export default function HomePage({
 }) {
   const [commentInputs, setCommentInputs] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [visiblePostsCount, setVisiblePostsCount] = useState(5);
 
   // Filter posts based on search query
   const filteredPosts = posts.filter(post => {
@@ -48,6 +51,14 @@ export default function HomePage({
       post.city?.toLowerCase().includes(query)
     );
   });
+
+  useEffect(() => {
+    setVisiblePostsCount(5);
+  }, [searchQuery, posts]);
+
+  const visiblePosts = filteredPosts.slice(0, visiblePostsCount);
+  const hasMorePosts = visiblePostsCount < filteredPosts.length;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
       <div className="absolute inset-0 opacity-20">
@@ -251,7 +262,7 @@ export default function HomePage({
         )}
 
         <div className="space-y-6">
-          {!loading && !error && filteredPosts.map((post, index) => (
+          {!loading && !error && visiblePosts.map((post, index) => (
             <motion.article
               key={post.id}
               initial={{ opacity: 0, y: 20 }}
@@ -278,9 +289,9 @@ export default function HomePage({
               </div>
 
               <img
-                src={post.image}
+                src={typeof post.image === 'string' && post.image.startsWith('/uploads/') ? `${API_ORIGIN}${post.image}` : post.image}
                 alt={post.caption}
-                className="w-full h-80 object-cover"
+                className="w-full max-h-[70vh] object-contain bg-black/20"
               />
 
               <div className="p-4">
@@ -292,7 +303,10 @@ export default function HomePage({
                         post.isLiked ? 'text-red-400' : 'text-blue-200 hover:text-red-400'
                       }`}
                     >
-                      <Heart className={`w-5 h-5 ${post.isLiked ? 'fill-current' : ''}`} />
+                      <Heart
+                        className="w-5 h-5"
+                        fill={post.isLiked ? 'currentColor' : 'none'}
+                      />
                       <span className="text-white">{post.likes.toLocaleString()}</span>
                     </button>
                     <button 
@@ -381,16 +395,21 @@ export default function HomePage({
           ))}
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="text-center py-8"
-        >
-          <button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl">
-            Load More Posts
-          </button>
-        </motion.div>
+        {!loading && !error && hasMorePosts && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="text-center py-8"
+          >
+            <button
+              onClick={() => setVisiblePostsCount(prev => prev + 5)}
+              className="px-8 py-3 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              Load More Posts
+            </button>
+          </motion.div>
+        )}
 
         <motion.button
           whileHover={{ scale: 1.1 }}
