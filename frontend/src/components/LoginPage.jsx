@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Camera, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { useTheme } from '../theme';
 
 export default function LoginPage({ 
   isLogin, 
@@ -15,8 +16,17 @@ export default function LoginPage({
   onSubmit,
   goToHome 
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <div
+      className={`min-h-screen flex items-center justify-center p-4 relative overflow-hidden ${
+        isDark
+          ? 'bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 text-white'
+          : 'bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-900'
+      }`}
+    >
       <div className="absolute inset-0 opacity-20">
         <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
       </div>
@@ -32,7 +42,11 @@ export default function LoginPage({
         transition={{ duration: 0.5 }}
         className="relative z-10 w-full max-w-md"
       >
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
+        <div
+          className={`backdrop-blur-lg rounded-3xl p-8 shadow-2xl border ${
+            isDark ? 'bg-white/10 border-white/20' : 'bg-white/70 border-black/10'
+          }`}
+        >
           <div className="text-center mb-8">
             <div className="mx-auto w-24 h-24 rounded-full flex items-center justify-center mb-4 overflow-hidden">
               <img 
@@ -41,20 +55,20 @@ export default function LoginPage({
                 className="w-full h-full object-cover scale-125"
               />
             </div>
-            <h1 className="text-3xl font-bold text-white">
+            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
               <span className="text-blue-300">Travel</span>
               <span className="text-orange-300">Connect</span>
             </h1>
-            <p className="text-blue-200 mt-2">Join the global travel community</p>
+            <p className={`mt-2 ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>Join the global travel community</p>
           </div>
 
-          <div className="flex mb-6 bg-white/10 rounded-xl p-1">
+          <div className={`flex mb-6 rounded-xl p-1 ${isDark ? 'bg-white/10' : 'bg-black/5'}`}>
             <button
               onClick={() => setIsLogin(true)}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                 isLogin
                   ? 'bg-white text-indigo-900 shadow-sm'
-                  : 'text-white hover:bg-white/10'
+                  : (isDark ? 'text-white hover:bg-white/10' : 'text-slate-700 hover:bg-black/5')
               }`}
             >
               Sign In
@@ -64,7 +78,7 @@ export default function LoginPage({
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
                 !isLogin
                   ? 'bg-white text-indigo-900 shadow-sm'
-                  : 'text-white hover:bg-white/10'
+                  : (isDark ? 'text-white hover:bg-white/10' : 'text-slate-700 hover:bg-black/5')
               }`}
             >
               Sign Up
@@ -78,16 +92,20 @@ export default function LoginPage({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                <label className="block text-white text-sm font-medium mb-2">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-white' : 'text-slate-700'}`}>
                   Username
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-blue-200" />
+                    <User className={`h-5 w-5 ${isDark ? 'text-blue-200' : 'text-slate-500'}`} />
                   </div>
                   <input
                     type="text"
-                    className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                    className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all ${
+                      isDark
+                        ? 'bg-white/10 border border-white/20 text-white placeholder-blue-200'
+                        : 'bg-white border border-black/10 text-slate-900 placeholder-slate-400'
+                    }`}
                     placeholder="Enter your username"
                   />
                 </div>
@@ -99,18 +117,22 @@ export default function LoginPage({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: isLogin ? 0.1 : 0.2 }}
             >
-              <label className="block text-white text-sm font-medium mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-white' : 'text-slate-700'}`}>
                 Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-blue-200" />
+                  <Mail className={`h-5 w-5 ${isDark ? 'text-blue-200' : 'text-slate-500'}`} />
                 </div>
                 <input
                   type="email"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                  className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all ${
+                    isDark
+                      ? 'bg-white/10 border border-white/20 text-white placeholder-blue-200'
+                      : 'bg-white border border-black/10 text-slate-900 placeholder-slate-400'
+                  }`}
                   placeholder="Enter your email"
                   required
                 />
@@ -122,18 +144,22 @@ export default function LoginPage({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: isLogin ? 0.2 : 0.3 }}
             >
-              <label className="block text-white text-sm font-medium mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-white' : 'text-slate-700'}`}>
                 Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-blue-200" />
+                  <Lock className={`h-5 w-5 ${isDark ? 'text-blue-200' : 'text-slate-500'}`} />
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                  className={`w-full pl-10 pr-12 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all ${
+                    isDark
+                      ? 'bg-white/10 border border-white/20 text-white placeholder-blue-200'
+                      : 'bg-white border border-black/10 text-slate-900 placeholder-slate-400'
+                  }`}
                   placeholder="Enter your password"
                   required
                   minLength="8"
@@ -144,9 +170,9 @@ export default function LoginPage({
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-blue-200" />
+                    <EyeOff className={`h-5 w-5 ${isDark ? 'text-blue-200' : 'text-slate-500'}`} />
                   ) : (
-                    <Eye className="h-5 w-5 text-blue-200" />
+                    <Eye className={`h-5 w-5 ${isDark ? 'text-blue-200' : 'text-slate-500'}`} />
                   )}
                 </button>
               </div>

@@ -6,6 +6,7 @@ import {
   Settings, Grid, Heart, MessageCircle, X, Check
 } from 'lucide-react';
 import UserDropdown from './UserDropdown';
+import { useTheme } from '../theme';
 
 const API_ORIGIN = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
 
@@ -25,6 +26,9 @@ export default function ProfilePage({
   onAddComment,
   onDeletePost
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
     name: user?.name || '',
@@ -102,7 +106,13 @@ export default function ProfilePage({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
+    <div
+      className={`min-h-screen relative overflow-hidden ${
+        isDark
+          ? 'bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 text-white'
+          : 'bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-900'
+      }`}
+    >
       <div className="absolute inset-0 opacity-20">
         <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
       </div>
@@ -120,18 +130,26 @@ export default function ProfilePage({
           <div className="flex items-center space-x-4">
             <button
               onClick={goBack}
-              className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+              className={`p-2 rounded-full transition-colors ${
+                isDark
+                  ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+              }`}
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
               {user?.username || 'Profile'}
             </h1>
           </div>
 
           <button
             onClick={goToSettings}
-            className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            className={`p-2 rounded-full transition-colors ${
+              isDark
+                ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+            }`}
           >
             <Settings className="w-5 h-5" />
           </button>
@@ -141,7 +159,9 @@ export default function ProfilePage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 mb-6"
+          className={`backdrop-blur-lg rounded-2xl p-6 border mb-6 ${
+            isDark ? 'bg-white/10 border-white/20' : 'bg-white/70 border-black/10'
+          }`}
         >
           <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-8">
             {/* Profile Picture */}
@@ -171,10 +191,14 @@ export default function ProfilePage({
               {!isEditing ? (
                 <>
                   <div className="flex items-center justify-center md:justify-start space-x-3 mb-4">
-                    <h2 className="text-2xl font-bold text-white">{user?.name}</h2>
+                    <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{user?.name}</h2>
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                      className={`p-2 rounded-full transition-colors ${
+                        isDark
+                          ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                      }`}
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
@@ -182,42 +206,42 @@ export default function ProfilePage({
 
                   <div className="flex justify-center md:justify-start space-x-8 mb-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-white">{stats.posts}</div>
-                      <div className="text-sm text-blue-200">Posts</div>
+                      <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{stats.posts}</div>
+                      <div className={`text-sm ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>Posts</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-white">{stats.followers}</div>
-                      <div className="text-sm text-blue-200">Followers</div>
+                      <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{stats.followers}</div>
+                      <div className={`text-sm ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>Followers</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-white">{stats.following}</div>
-                      <div className="text-sm text-blue-200">Following</div>
+                      <div className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{stats.following}</div>
+                      <div className={`text-sm ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>Following</div>
                     </div>
                   </div>
 
                   {user?.bio && (
-                    <p className="text-white mb-3">{user.bio}</p>
+                    <p className={`mb-3 ${isDark ? 'text-white' : 'text-slate-700'}`}>{user.bio}</p>
                   )}
 
                   <div className="space-y-1">
                     {user?.location && (
-                      <div className="flex items-center justify-center md:justify-start space-x-2 text-blue-200">
+                      <div className={`flex items-center justify-center md:justify-start space-x-2 ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>
                         <MapPin className="w-4 h-4" />
                         <span className="text-sm">{user.location}</span>
                       </div>
                     )}
                     {user?.website && (
-                      <div className="flex items-center justify-center md:justify-start space-x-2 text-blue-200">
+                      <div className={`flex items-center justify-center md:justify-start space-x-2 ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>
                         <LinkIcon className="w-4 h-4" />
-                        <a href={user.website} target="_blank" rel="noopener noreferrer" className="text-sm hover:text-white transition-colors">
+                        <a href={user.website} target="_blank" rel="noopener noreferrer" className={`text-sm transition-colors ${isDark ? 'hover:text-white' : 'hover:text-slate-900'}`}>
                           {user.website}
                         </a>
                       </div>
                     )}
                     {user?.joinedDate && (
-                      <div className="flex items-center justify-center md:justify-start space-x-2 text-blue-200">
+                      <div className={`flex items-center justify-center md:justify-start space-x-2 ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>
                         <Calendar className="w-4 h-4" />
-                        <span className="text-sm">Joined {new Date(user.joinedDate).toLocaleDateString()}</span>
+                        <span className="text-sm">Joined {user.joinedDate}</span>
                       </div>
                     )}
                   </div>
@@ -225,44 +249,60 @@ export default function ProfilePage({
               ) : (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-blue-200 mb-2">Name</label>
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-blue-200' : 'text-slate-700'}`}>Name</label>
                     <input
                       type="text"
                       value={editedProfile.name}
                       onChange={(e) => setEditedProfile({ ...editedProfile, name: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className={`w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                        isDark
+                          ? 'bg-white/10 border border-white/20 text-white placeholder-blue-300'
+                          : 'bg-white border border-black/10 text-slate-900 placeholder-slate-400'
+                      }`}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-blue-200 mb-2">Bio</label>
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-blue-200' : 'text-slate-700'}`}>Bio</label>
                     <textarea
                       value={editedProfile.bio}
                       onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
                       rows="3"
-                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className={`w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                        isDark
+                          ? 'bg-white/10 border border-white/20 text-white placeholder-blue-300'
+                          : 'bg-white border border-black/10 text-slate-900 placeholder-slate-400'
+                      }`}
                       placeholder="Tell us about yourself..."
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-blue-200 mb-2">Location</label>
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-blue-200' : 'text-slate-700'}`}>Location</label>
                     <input
                       type="text"
                       value={editedProfile.location}
                       onChange={(e) => setEditedProfile({ ...editedProfile, location: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className={`w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                        isDark
+                          ? 'bg-white/10 border border-white/20 text-white placeholder-blue-300'
+                          : 'bg-white border border-black/10 text-slate-900 placeholder-slate-400'
+                      }`}
                       placeholder="City, Country"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-blue-200 mb-2">Website</label>
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-blue-200' : 'text-slate-700'}`}>Website</label>
                     <input
                       type="url"
                       value={editedProfile.website}
                       onChange={(e) => setEditedProfile({ ...editedProfile, website: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className={`w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                        isDark
+                          ? 'bg-white/10 border border-white/20 text-white placeholder-blue-300'
+                          : 'bg-white border border-black/10 text-slate-900 placeholder-slate-400'
+                      }`}
                       placeholder="https://example.com"
                     />
                   </div>
@@ -277,7 +317,11 @@ export default function ProfilePage({
                     </button>
                     <button
                       onClick={handleCancelEdit}
-                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-all"
+                      className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2 font-medium rounded-lg transition-all ${
+                        isDark
+                          ? 'bg-white/10 text-white hover:bg-white/20'
+                          : 'bg-black/5 text-slate-900 hover:bg-black/10'
+                      }`}
                     >
                       <X className="w-4 h-4" />
                       <span>Cancel</span>
@@ -294,15 +338,17 @@ export default function ProfilePage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 mb-6"
+          className={`backdrop-blur-lg rounded-2xl border mb-6 ${
+            isDark ? 'bg-white/10 border-white/20' : 'bg-white/70 border-black/10'
+          }`}
         >
-          <div className="flex border-b border-white/20">
+          <div className={`flex border-b ${isDark ? 'border-white/20' : 'border-black/10'}`}>
             <button
               onClick={() => setActiveTab('posts')}
               className={`flex-1 flex items-center justify-center space-x-2 py-4 transition-colors ${
                 activeTab === 'posts'
-                  ? 'text-white border-b-2 border-blue-400'
-                  : 'text-blue-200 hover:text-white'
+                  ? (isDark ? 'text-white border-b-2 border-blue-400' : 'text-slate-900 border-b-2 border-blue-500')
+                  : (isDark ? 'text-blue-200 hover:text-white' : 'text-slate-600 hover:text-slate-900')
               }`}
             >
               <Grid className="w-5 h-5" />
@@ -341,8 +387,8 @@ export default function ProfilePage({
                 ) : (
                   <div className="col-span-3 text-center py-12">
                     <Camera className="w-16 h-16 text-blue-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-white mb-2">No Posts Yet</h3>
-                    <p className="text-blue-200">Share your travel adventures!</p>
+                    <h3 className={`text-xl font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>No Posts Yet</h3>
+                    <p className={isDark ? 'text-blue-200' : 'text-slate-600'}>Share your travel adventures!</p>
                   </div>
                 )}
               </div>
@@ -371,7 +417,11 @@ export default function ProfilePage({
                   )}
                   <button
                     onClick={() => setSelectedPostId(null)}
-                    className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                    className={`p-2 rounded-full transition-colors ${
+                      isDark
+                        ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                    }`}
                   >
                     <X className="w-5 h-5" />
                   </button>

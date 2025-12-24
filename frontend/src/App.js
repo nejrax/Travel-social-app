@@ -11,6 +11,16 @@ import ProfilePage from './components/ProfilePage';
 import SettingsPage from './components/SettingsPage';
 import FindPage from './components/FindPage';
 
+const ProtectedRoute = ({ children, authChecked, isAuthenticated }) => {
+  if (!authChecked) {
+    return null;
+  }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
 export default function App() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
@@ -39,6 +49,26 @@ export default function App() {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    // Diagnostics: helps detect real browser refresh/unload vs React re-render
+    console.log('[App] mounted', { path: window.location.pathname, ts: Date.now() });
+
+    const onBeforeUnload = () => {
+      console.log('[App] beforeunload', { path: window.location.pathname, ts: Date.now() });
+    };
+
+    const onPageHide = () => {
+      console.log('[App] pagehide', { path: window.location.pathname, ts: Date.now() });
+    };
+
+    window.addEventListener('beforeunload', onBeforeUnload);
+    window.addEventListener('pagehide', onPageHide);
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      window.removeEventListener('pagehide', onPageHide);
+    };
+  }, []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -471,7 +501,7 @@ export default function App() {
 
   // Handle create post
   const handleCreatePost = async (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
     if (selectedImage && caption.trim() && postLocation.trim()) {
       try {
         setLoading(true);
@@ -481,15 +511,15 @@ export default function App() {
           city: postLocation.split(',')[0].trim(),
           googleMapsLink: 'https://maps.app.goo.gl/example',
           price: 0,
-          image: selectedImage
         };
+
         await api.posts.create(newPost);
         alert('Post created successfully!');
         setSelectedImage(null);
         setCaption('');
         setPostLocation('');
         goToHome();
-        
+
         // Refresh posts
         const data = await api.posts.getAll();
         setPosts(formatPosts(data));
@@ -524,16 +554,6 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const ProtectedRoute = ({ children }) => {
-    if (!authChecked) {
-      return null;
-    }
-    if (!isAuthenticated) {
-      return <Navigate to="/login" replace />;
-    }
-    return children;
   };
 
   const SplashRoute = () => {
@@ -586,7 +606,7 @@ export default function App() {
       <Route
         path="/home"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute authChecked={authChecked} isAuthenticated={isAuthenticated}>
             <HomePage
               posts={posts}
               loading={loading}
@@ -620,7 +640,7 @@ export default function App() {
       <Route
         path="/find"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute authChecked={authChecked} isAuthenticated={isAuthenticated}>
             <FindPage
               goBack={() => navigate('/home')}
             />
@@ -631,7 +651,7 @@ export default function App() {
       <Route
         path="/create"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute authChecked={authChecked} isAuthenticated={isAuthenticated}>
             <CreatePostPage
               goBack={() => navigate('/home')}
               selectedImage={selectedImage}
@@ -649,7 +669,7 @@ export default function App() {
       <Route
         path="/profile"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute authChecked={authChecked} isAuthenticated={isAuthenticated}>
             <ProfilePage
               goBack={() => navigate('/home')}
               goToSettings={goToSettings}
@@ -673,7 +693,7 @@ export default function App() {
       <Route
         path="/notifications"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute authChecked={authChecked} isAuthenticated={isAuthenticated}>
             <NotificationsPage
               goBack={() => navigate('/home')}
               notifications={notifications}
@@ -689,7 +709,7 @@ export default function App() {
       <Route
         path="/map"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute authChecked={authChecked} isAuthenticated={isAuthenticated}>
             <MapPage
               goBack={() => navigate('/home')}
               goToProfile={goToProfile}
@@ -706,7 +726,7 @@ export default function App() {
       <Route
         path="/settings"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute authChecked={authChecked} isAuthenticated={isAuthenticated}>
             <SettingsPage
               goBack={() => navigate('/home')}
               onSignOut={handleSignOut}

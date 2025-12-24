@@ -1,9 +1,19 @@
 import { motion } from 'framer-motion';
 import { Camera } from 'lucide-react';
+import { useTheme } from '../theme';
 
 export default function SplashScreen({ showLogo, showText }) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   return (
-    <div className="w-full h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 flex items-center justify-center overflow-hidden relative">
+    <div
+      className={`w-full h-screen flex items-center justify-center overflow-hidden relative ${
+        isDark
+          ? 'bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 text-white'
+          : 'bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-900'
+      }`}
+    >
       <div className="absolute inset-0 opacity-20">
         <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
       </div>
@@ -55,11 +65,11 @@ export default function SplashScreen({ showLogo, showText }) {
           transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
           className="space-y-4"
         >
-          <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight">
+          <h1 className={`text-5xl md:text-7xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
             <span className="text-blue-300">Travel</span>
             <span className="text-orange-300">Connect</span>
           </h1>
-          <p className="text-xl md:text-2xl text-blue-200 font-light">
+          <p className={`text-xl md:text-2xl font-light ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>
             Capture your journey. Share your world.
           </p>
         </motion.div>
@@ -87,7 +97,7 @@ export default function SplashScreen({ showLogo, showText }) {
               />
             ))}
           </div>
-          <p className="mt-4 text-sm text-blue-200">Loading your travel adventure...</p>
+          <p className={`mt-4 text-sm ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>Loading your travel adventure...</p>
         </motion.div>
       </div>
       

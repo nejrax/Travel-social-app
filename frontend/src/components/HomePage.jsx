@@ -6,6 +6,7 @@ import {
 import UserDropdown from './UserDropdown';
 
 import { useEffect, useState } from 'react';
+import { useTheme } from '../theme';
 
 const API_ORIGIN = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
 
@@ -35,6 +36,9 @@ export default function HomePage({
   expandedComments,
   postComments
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   const [commentInputs, setCommentInputs] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [visiblePostsCount, setVisiblePostsCount] = useState(5);
@@ -69,9 +73,15 @@ export default function HomePage({
   const hasMorePosts = visiblePostsCount < filteredByTab.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
+    <div
+      className={`min-h-screen relative overflow-hidden ${
+        isDark
+          ? 'bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 text-white'
+          : 'bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-900'
+      }`}
+    >
       <div className="absolute inset-0 opacity-20">
-        <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
+        <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-contain bg-no-repeat bg-center bg-fixed"></div>
       </div>
       
       <div className="absolute top-10 right-10 w-20 h-20 bg-blue-500 rounded-full opacity-20 blur-xl"></div>
@@ -94,7 +104,7 @@ export default function HomePage({
                 className="w-full h-full object-cover scale-125"
               />
             </div>
-            <h1 className="text-2xl font-bold text-white hidden sm:block">
+            <h1 className={`text-2xl font-bold hidden sm:block ${isDark ? 'text-white' : 'text-slate-900'}`}>
               <span className="text-blue-300">Travel</span>
               <span className="text-orange-300">Connect</span>
             </h1>
@@ -102,17 +112,19 @@ export default function HomePage({
 
           <nav className="hidden md:flex items-center space-x-8 relative z-30">
             <button
+              type="button"
               onClick={() => setActiveTab('explore')}
               className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all relative z-30 cursor-pointer ${
                 activeTab === 'explore'
-                  ? 'bg-white/20 text-white'
-                  : 'text-blue-200 hover:text-white hover:bg-white/10'
+                  ? (isDark ? 'bg-white/20 text-white' : 'bg-black/5 text-slate-900')
+                  : (isDark ? 'text-blue-200 hover:text-white hover:bg-white/10' : 'text-slate-700 hover:text-slate-900 hover:bg-black/5')
               }`}
             >
               <Compass className="w-4 h-4" />
               <span>Explore</span>
             </button>
             <button
+              type="button"
               onClick={() => {
                 console.log('Map button clicked, goToMap:', goToMap);
                 if (goToMap) {
@@ -121,7 +133,11 @@ export default function HomePage({
                   console.error('goToMap is undefined!');
                 }
               }}
-              className="flex items-center space-x-2 px-4 py-2 rounded-xl text-blue-200 hover:text-white hover:bg-white/10 transition-all relative z-30 cursor-pointer"
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all relative z-30 cursor-pointer ${
+                isDark
+                  ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+              }`}
               style={{ pointerEvents: 'auto' }}
             >
               <Map className="w-4 h-4" />
@@ -131,8 +147,13 @@ export default function HomePage({
 
           <div className="flex items-center space-x-3">
             <button 
+              type="button"
               onClick={goToNotifications}
-              className="relative p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+              className={`relative p-2 rounded-full transition-colors ${
+                isDark
+                  ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+              }`}
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
@@ -148,7 +169,12 @@ export default function HomePage({
             />
             
             <button 
-              className="md:hidden p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+              type="button"
+              className={`md:hidden p-2 rounded-full transition-colors ${
+                isDark
+                  ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+              }`}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -164,6 +190,7 @@ export default function HomePage({
           >
             <nav className="flex flex-col space-y-3">
               <button
+                type="button"
                 onClick={() => {
                   setActiveTab('explore');
                   setIsMobileMenuOpen(false);
@@ -174,6 +201,7 @@ export default function HomePage({
                 <span>Explore</span>
               </button>
               <button
+                type="button"
                 onClick={() => {
                   console.log('Mobile Map button clicked');
                   if (goToMap) {
@@ -221,6 +249,7 @@ export default function HomePage({
             const IconComponent = filter.icon;
             return (
               <button
+                type="button"
                 key={filter.id}
                 className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   selectedFilter === filter.id
@@ -248,6 +277,7 @@ export default function HomePage({
           <div className="text-center py-16">
             <div className="text-red-400 text-lg mb-4">Error: {error}</div>
             <button 
+              type="button"
               onClick={() => window.location.reload()} 
               className="px-6 py-3 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all duration-300"
             >
@@ -262,6 +292,7 @@ export default function HomePage({
             <h3 className="text-2xl font-bold text-white mb-2">No posts yet</h3>
             <p className="text-blue-200 text-lg mb-6">Be the first to share your travel adventure!</p>
             <button 
+              type="button"
               onClick={goToCreate}
               className="px-6 py-3 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all duration-300"
             >
@@ -299,7 +330,12 @@ export default function HomePage({
                   )}
                   {currentUserId && post.userId && currentUserId !== post.userId && (
                     <button
-                      onClick={() => onToggleFollow && onToggleFollow(post.userId)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onToggleFollow && onToggleFollow(post.userId);
+                      }}
                       className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all border ${
                         post.isFollowing
                           ? 'bg-white/10 text-white border-white/20 hover:bg-white/15'
@@ -326,7 +362,12 @@ export default function HomePage({
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-4">
                     <button 
-                      onClick={() => onLikePost && onLikePost(post.id)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onLikePost && onLikePost(post.id);
+                      }}
                       className={`flex items-center space-x-1 p-2 rounded-full transition-colors ${
                         post.isLiked ? 'text-red-400' : 'text-blue-200 hover:text-red-400'
                       }`}
@@ -338,13 +379,18 @@ export default function HomePage({
                       <span className="text-white">{post.likes.toLocaleString()}</span>
                     </button>
                     <button 
-                      onClick={() => onToggleComments && onToggleComments(post.id)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onToggleComments && onToggleComments(post.id);
+                      }}
                       className="flex items-center space-x-1 text-blue-200 hover:text-white p-2 rounded-full transition-colors"
                     >
                       <MessageCircle className="w-5 h-5" />
                       <span className="text-white">{post.comments}</span>
                     </button>
-                    <button className="flex items-center space-x-1 text-blue-200 hover:text-white p-2 rounded-full transition-colors">
+                    <button type="button" className="flex items-center space-x-1 text-blue-200 hover:text-white p-2 rounded-full transition-colors">
                       <Share2 className="w-5 h-5" />
                     </button>
                   </div>
@@ -390,18 +436,23 @@ export default function HomePage({
                           ...prev,
                           [post.id]: e.target.value
                         }))}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && commentInputs[post.id]?.trim()) {
-                            onAddComment && onAddComment(post.id, commentInputs[post.id]);
-                            setCommentInputs(prev => ({
-                              ...prev,
-                              [post.id]: ''
-                            }));
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (commentInputs[post.id]?.trim()) {
+                              onAddComment && onAddComment(post.id, commentInputs[post.id]);
+                              setCommentInputs(prev => ({
+                                ...prev,
+                                [post.id]: ''
+                              }));
+                            }
                           }
                         }}
                         className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-blue-300 focus:outline-none focus:border-blue-400 focus:bg-white/15 transition-all"
                       />
                       <button
+                        type="button"
                         onClick={() => {
                           if (commentInputs[post.id]?.trim()) {
                             onAddComment && onAddComment(post.id, commentInputs[post.id]);
@@ -431,6 +482,7 @@ export default function HomePage({
             className="text-center py-8"
           >
             <button
+              type="button"
               onClick={() => setVisiblePostsCount(prev => prev + 5)}
               className="px-8 py-3 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
@@ -443,6 +495,7 @@ export default function HomePage({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={goToCreate}
+          type="button"
           className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-blue-500 to-orange-500 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-50"
         >
           <Plus className="w-6 h-6" />

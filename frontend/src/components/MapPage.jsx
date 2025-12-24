@@ -2,8 +2,12 @@ import { motion } from 'framer-motion';
 import { Map, MapPin, Navigation, Globe, ArrowLeft, Camera, Bell, User } from 'lucide-react';
 import UserDropdown from './UserDropdown';
 import { useEffect, useRef } from 'react';
+import { useTheme } from '../theme';
 
 export default function MapPage({ goBack, goToProfile, goToSettings, goToNotifications, onSignOut, unreadCount, posts }) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   const mapRef = useRef(null);
   const googleMapRef = useRef(null);
 
@@ -106,7 +110,13 @@ export default function MapPage({ goBack, goToProfile, goToSettings, goToNotific
     return cityCoords[cityName] || null;
   };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
+    <div
+      className={`min-h-screen relative overflow-hidden ${
+        isDark
+          ? 'bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 text-white'
+          : 'bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-900'
+      }`}
+    >
       <div className="absolute inset-0 opacity-20">
         <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
       </div>
@@ -126,15 +136,23 @@ export default function MapPage({ goBack, goToProfile, goToSettings, goToNotific
           <div className="flex items-center space-x-4">
             <button
               onClick={goBack}
-              className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+              className={`p-2 rounded-full transition-colors ${
+                isDark
+                  ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+              }`}
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-                <Camera className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
+                <img
+                  src="/logo.png"
+                  alt="TravelConnect Logo"
+                  className="w-full h-full object-cover scale-125"
+                />
               </div>
-              <h1 className="text-2xl font-bold text-white hidden sm:block">
+              <h1 className={`text-2xl font-bold hidden sm:block ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 <span className="text-blue-300">Travel</span>
                 <span className="text-orange-300">Connect</span>
               </h1>
@@ -144,7 +162,11 @@ export default function MapPage({ goBack, goToProfile, goToSettings, goToNotific
           <div className="flex items-center space-x-3">
             <button 
               onClick={goToNotifications}
-              className="relative p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+              className={`relative p-2 rounded-full transition-colors ${
+                isDark
+                  ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-black/5'
+              }`}
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
@@ -168,15 +190,17 @@ export default function MapPage({ goBack, goToProfile, goToSettings, goToNotific
           className="mt-8"
         >
           <div className="text-center mb-8">
-            <h2 className="text-4xl font-bold text-white mb-3">
+            <h2 className={`text-4xl font-bold mb-3 ${isDark ? 'text-white' : 'text-slate-900'}`}>
               Explore the World Map
             </h2>
-            <p className="text-blue-200 text-lg">
+            <p className={`text-lg ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>
               Discover travel destinations and posts from around the globe
             </p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl overflow-hidden border border-white/20">
+          <div className={`backdrop-blur-lg rounded-2xl overflow-hidden border ${
+            isDark ? 'bg-white/10 border-white/20' : 'bg-white/70 border-black/10'
+          }`}>
             <div 
               ref={mapRef}
               className="w-full h-[600px]"
@@ -185,26 +209,32 @@ export default function MapPage({ goBack, goToProfile, goToSettings, goToNotific
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 text-center">
+            <div className={`backdrop-blur-sm rounded-xl p-6 border text-center ${
+              isDark ? 'bg-white/5 border-white/10' : 'bg-white/70 border-black/10'
+            }`}>
               <MapPin className="w-8 h-8 text-orange-400 mx-auto mb-3" />
-              <h4 className="text-white font-semibold mb-2">Location Pins</h4>
-              <p className="text-blue-200 text-sm">
+              <h4 className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Location Pins</h4>
+              <p className={`text-sm ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>
                 Click on pins to see posts from specific locations
               </p>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 text-center">
+            <div className={`backdrop-blur-sm rounded-xl p-6 border text-center ${
+              isDark ? 'bg-white/5 border-white/10' : 'bg-white/70 border-black/10'
+            }`}>
               <Navigation className="w-8 h-8 text-blue-400 mx-auto mb-3" />
-              <h4 className="text-white font-semibold mb-2">Navigation</h4>
-              <p className="text-blue-200 text-sm">
+              <h4 className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Navigation</h4>
+              <p className={`text-sm ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>
                 Zoom and pan to explore different regions
               </p>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 text-center">
+            <div className={`backdrop-blur-sm rounded-xl p-6 border text-center ${
+              isDark ? 'bg-white/5 border-white/10' : 'bg-white/70 border-black/10'
+            }`}>
               <Globe className="w-8 h-8 text-green-400 mx-auto mb-3" />
-              <h4 className="text-white font-semibold mb-2">Global View</h4>
-              <p className="text-blue-200 text-sm">
+              <h4 className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Global View</h4>
+              <p className={`text-sm ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>
                 Discover travel content from around the world
               </p>
             </div>

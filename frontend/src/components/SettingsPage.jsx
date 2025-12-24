@@ -1,12 +1,14 @@
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { 
   ArrowLeft, Lock, Bell, Globe, Eye, Shield, HelpCircle, 
   LogOut, ChevronRight, Moon, Sun, Smartphone, Mail, Key,
   UserX, Download, Trash2, AlertCircle
 } from 'lucide-react';
+import { useTheme } from '../theme';
 
 export default function SettingsPage({ goBack, onSignOut, user }) {
+  const { theme, toggleTheme } = useTheme();
   const [activeSection, setActiveSection] = useState(null);
   const [settings, setSettings] = useState({
     notifications: {
@@ -21,26 +23,10 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
       showActivity: true,
       allowTagging: true,
       allowMentions: true
-    },
-    theme: 'dark'
+    }
   });
 
-  const isDark = settings.theme === 'dark';
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light' || savedTheme === 'dark') {
-      setSettings(prev => ({ ...prev, theme: savedTheme }));
-      document.body.dataset.theme = savedTheme;
-    } else {
-      document.body.dataset.theme = settings.theme;
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('theme', settings.theme);
-    document.body.dataset.theme = settings.theme;
-  }, [settings.theme]);
+  const isDark = theme === 'dark';
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -58,12 +44,7 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
     }));
   };
 
-  const handleToggleTheme = () => {
-    setSettings(prev => ({
-      ...prev,
-      theme: prev.theme === 'dark' ? 'light' : 'dark'
-    }));
-  };
+  const handleToggleTheme = () => toggleTheme();
 
   const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -122,9 +103,9 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
     {
       id: 'appearance',
       title: 'Appearance',
-      icon: settings.theme === 'dark' ? Moon : Sun,
+      icon: theme === 'dark' ? Moon : Sun,
       items: [
-        { id: 'theme', label: 'Theme', value: settings.theme === 'dark' ? 'Dark Mode' : 'Light Mode', icon: settings.theme === 'dark' ? Moon : Sun, action: handleToggleTheme }
+        { id: 'theme', label: 'Theme', value: theme === 'dark' ? 'Dark Mode' : 'Light Mode', icon: theme === 'dark' ? Moon : Sun, action: handleToggleTheme }
       ]
     },
     {

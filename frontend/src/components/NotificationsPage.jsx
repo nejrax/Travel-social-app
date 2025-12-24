@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, Heart, MessageCircle, MapPin, Check, UserPlus, AtSign, Camera } from 'lucide-react';
 import { useEffect } from 'react';
+import { useTheme } from '../theme';
 
 export default function NotificationsPage({ 
   goBack, 
@@ -10,6 +11,9 @@ export default function NotificationsPage({
   setActiveTab,
   onMarkAllAsRead
 }) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   // Mark all notifications as read when page opens
   useEffect(() => {
     if (unreadCount > 0 && onMarkAllAsRead) {
@@ -52,7 +56,13 @@ export default function NotificationsPage({
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
+    <div
+      className={`min-h-screen relative overflow-hidden ${
+        isDark
+          ? 'bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 text-white'
+          : 'bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-900'
+      }`}
+    >
       <div className="absolute inset-0 opacity-20">
         <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
       </div>
@@ -71,12 +81,16 @@ export default function NotificationsPage({
         >
           <button 
             onClick={goBack}
-            className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+            className={`p-2 rounded-full transition-colors ${
+              isDark
+                ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+            }`}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-white">Notifications</h2>
+            <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Notifications</h2>
           </div>
           <div className="w-10"></div>
         </motion.header>
@@ -99,7 +113,9 @@ export default function NotificationsPage({
               className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all relative ${
                 activeTab === filter.id
                   ? 'bg-gradient-to-r from-blue-500 to-orange-500 text-white shadow-lg'
-                  : 'bg-white/10 text-blue-200 hover:bg-white/20 hover:text-white'
+                  : (isDark
+                      ? 'bg-white/10 text-blue-200 hover:bg-white/20 hover:text-white'
+                      : 'bg-black/5 text-slate-700 hover:bg-black/10 hover:text-slate-900')
               }`}
             >
               {getNotificationIcon(filter.id === 'all' ? 'like' : filter.id)}
@@ -128,8 +144,12 @@ export default function NotificationsPage({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 * index }}
-                className={`bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20 hover:bg-white/20 transition-all duration-300 ${
-                  !notification.read ? 'border-l-4 border-l-blue-400 bg-white/15' : ''
+                className={`backdrop-blur-lg rounded-2xl p-4 border transition-all duration-300 ${
+                  isDark
+                    ? 'bg-white/10 border-white/20 hover:bg-white/20'
+                    : 'bg-white/70 border-black/10 hover:bg-black/5'
+                } ${
+                  !notification.read ? 'border-l-4 border-l-blue-400' : ''
                 }`}
               >
                 <div className="flex items-start space-x-3">
