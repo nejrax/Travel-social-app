@@ -262,6 +262,28 @@ export const api = {
       }
       
       return await response.json();
+    },
+
+    delete: async (postId) => {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        throw new Error('You must be logged in to delete a post');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+        method: 'DELETE',
+        headers: {
+          'x-auth-token': token,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.msg || 'Failed to delete post');
+      }
+
+      return await response.json();
     }
   },
 

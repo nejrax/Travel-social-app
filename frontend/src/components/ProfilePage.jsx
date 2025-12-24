@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { 
   ArrowLeft, Camera, Edit2, MapPin, Calendar, Link as LinkIcon,
@@ -15,7 +15,15 @@ export default function ProfilePage({
   onSignOut,
   user,
   userPosts,
-  onUpdateProfile
+  onUpdateProfile,
+  posts,
+  currentUserId,
+  expandedComments,
+  postComments,
+  onLikePost,
+  onToggleComments,
+  onAddComment,
+  onDeletePost
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
@@ -27,6 +35,24 @@ export default function ProfilePage({
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [activeTab, setActiveTab] = useState('posts');
+  const [selectedPostId, setSelectedPostId] = useState(null);
+  const [commentInputs, setCommentInputs] = useState({});
+
+  const selectedPost = selectedPostId ? (posts || []).find(p => p.id === selectedPostId) : null;
+
+  useEffect(() => {
+    setEditedProfile({
+      name: user?.name || '',
+      bio: user?.bio || '',
+      location: user?.location || '',
+      website: user?.website || ''
+    });
+    setIsEditing(false);
+    setSelectedImage(null);
+    setSelectedImageFile(null);
+    setSelectedPostId(null);
+    setCommentInputs({});
+  }, [user?.id]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -290,7 +316,11 @@ export default function ProfilePage({
               <div className="grid grid-cols-3 gap-2">
                 {userPosts && userPosts.length > 0 ? (
                   userPosts.map((post) => (
-                    <div key={post.id} className="relative aspect-square group cursor-pointer">
+                    <div
+                      key={post.id}
+                      className="relative aspect-square group cursor-pointer"
+                      onClick={() => setSelectedPostId(post.id)}
+                    >
                       <img
                         src={typeof post.image === 'string' && post.image.startsWith('/uploads/') ? `${API_ORIGIN}${post.image}` : post.image}
                         alt={post.caption}
@@ -319,6 +349,145 @@ export default function ProfilePage({
             )}
           </div>
         </motion.div>
+
+        {selectedPost && (
+          <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+            <div className="w-full max-w-4xl bg-purple-950/90 backdrop-blur-lg border border-white/20 rounded-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                <div className="text-white font-semibold">Post</div>
+                <div className="flex items-center space-x-2">
+                  {currentUserId && selectedPost.userId === currentUserId && (
+                    <button
+                      onClick={async () => {
+                        const ok = window.confirm('Delete this post?');
+                        if (!ok) return;
+                        await onDeletePost(selectedPost.id);
+                        setSelectedPostId(null);
+                      }}
+                      className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-red-600/90 text-white hover:bg-red-600 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedPostId(null)}
+                    className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2">
+                <div className="bg-black/20">
+                  <img
+                    src={typeof selectedPost.image === 'string' && selectedPost.image.startsWith('/uploads/') ? `${API_ORIGIN}${selectedPost.image}` : selectedPost.image}
+                    alt={selectedPost.caption}
+                    className="w-full max-h-[70vh] object-contain"
+                  />
+                </div>
+
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="text-white font-semibold">{selectedPost.user?.name}</div>
+                      <div className="text-blue-200 text-sm">{selectedPost.user?.username}</div>
+                      {selectedPost.location && (
+                        <div className="text-blue-300 text-sm mt-1">{selectedPost.location}</div>
+                      )}
+                    </div>
+                    <div className="text-blue-200 text-sm">{selectedPost.date}</div>
+                  </div>
+
+                  <div className="flex items-center space-x-4 mb-3">
+                    <button
+                      onClick={() => onLikePost && onLikePost(selectedPost.id)}
+                      className={`flex items-center space-x-1 p-2 rounded-full transition-colors ${
+                        selectedPost.isLiked ? 'text-red-400' : 'text-blue-200 hover:text-red-400'
+                      }`}
+                    >
+                      <Heart className="w-5 h-5" fill={selectedPost.isLiked ? 'currentColor' : 'none'} />
+                      <span className="text-white">{(selectedPost.likes || 0).toLocaleString()}</span>
+                    </button>
+                    <button
+                      onClick={() => onToggleComments && onToggleComments(selectedPost.id)}
+                      className="flex items-center space-x-1 text-blue-200 hover:text-white p-2 rounded-full transition-colors"
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                      <span className="text-white">{selectedPost.comments || 0}</span>
+                    </button>
+                  </div>
+
+                  <p className="text-white mb-3 leading-relaxed">{selectedPost.caption}</p>
+
+                  {expandedComments?.[selectedPost.id] && (
+                    <div className="mt-4 pt-4 border-t border-white/10">
+                      <h4 className="text-white font-semibold mb-3">Comments ({selectedPost.comments || 0})</h4>
+                      {postComments?.[selectedPost.id] && postComments[selectedPost.id].length > 0 ? (
+                        <div className="space-y-3 mb-4 max-h-[35vh] overflow-auto pr-1">
+                          {postComments[selectedPost.id].map(comment => (
+                            <div key={comment.id} className="flex space-x-3">
+                              <img
+                                src={comment.user.avatar}
+                                alt={comment.user.name}
+                                className="w-8 h-8 rounded-full flex-shrink-0"
+                              />
+                              <div className="flex-1">
+                                <div className="bg-white/5 rounded-lg p-3">
+                                  <p className="text-white font-medium text-sm">{comment.user.name}</p>
+                                  <p className="text-blue-100 text-sm mt-1">{comment.text}</p>
+                                </div>
+                                <p className="text-blue-300 text-xs mt-1">{comment.time}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-blue-300 text-sm mb-4">No comments yet. Be the first to comment!</p>
+                      )}
+
+                      <div className="flex space-x-3 mt-4">
+                        <input
+                          type="text"
+                          placeholder="What do you think of this?"
+                          value={commentInputs[selectedPost.id] || ''}
+                          onChange={(e) => setCommentInputs(prev => ({
+                            ...prev,
+                            [selectedPost.id]: e.target.value
+                          }))}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && commentInputs[selectedPost.id]?.trim()) {
+                              onAddComment && onAddComment(selectedPost.id, commentInputs[selectedPost.id]);
+                              setCommentInputs(prev => ({
+                                ...prev,
+                                [selectedPost.id]: ''
+                              }));
+                            }
+                          }}
+                          className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-blue-300 focus:outline-none focus:border-blue-400 focus:bg-white/15 transition-all"
+                        />
+                        <button
+                          onClick={() => {
+                            if (commentInputs[selectedPost.id]?.trim()) {
+                              onAddComment && onAddComment(selectedPost.id, commentInputs[selectedPost.id]);
+                              setCommentInputs(prev => ({
+                                ...prev,
+                                [selectedPost.id]: ''
+                              }));
+                            }
+                          }}
+                          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-orange-500 text-white font-medium rounded-lg hover:from-blue-600 hover:to-orange-600 transition-all"
+                        >
+                          Post
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

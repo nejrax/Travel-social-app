@@ -251,4 +251,46 @@ router.post('/:id/comments', auth, async (req, res) => {
   }
 });
 
+// @route   DELETE /api/posts/:id
+// @desc    Delete a post (only author)
+// @access  Private
+router.delete('/:id', auth, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const postId = parseInt(req.params.id, 10);
+    if (!postId || Number.isNaN(postId)) {
+      return res.status(400).json({ msg: 'Invalid post id' });
+    }
+
+    const ownerCheck = await client.query(
+      'SELECT user_id FROM posts WHERE post_id = $1',
+      [postId]
+    );
+
+    if (ownerCheck.rows.length === 0) {
+      return res.status(404).json({ msg: 'Post not found' });
+    }
+
+    if (ownerCheck.rows[0].user_id !== req.user.id) {
+      return res.status(403).json({ msg: 'Not allowed to delete this post' });
+    }
+
+    await client.query('BEGIN');
+    await client.query('DELETE FROM comments WHERE post_id = $1', [postId]);
+    await client.query('DELETE FROM likes WHERE post_id = $1', [postId]);
+    await client.query('DELETE FROM posts WHERE post_id = $1', [postId]);
+    await client.query('COMMIT');
+
+    res.json({ msg: 'Post deleted', post_id: postId });
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (_) {}
+    console.error(err.message);
+    res.status(500).send('Server error');
+  } finally {
+    client.release();
+  }
+});
+
 module.exports = router;

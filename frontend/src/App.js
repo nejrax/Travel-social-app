@@ -1,8 +1,5 @@
-
-
-
-
 import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { api } from './api';
 import SplashScreen from './components/SplashScreen';
 import LoginPage from './components/LoginPage';
@@ -12,9 +9,9 @@ import CreatePostPage from './components/CreatePostPage';
 import NotificationsPage from './components/NotificationsPage';
 import ProfilePage from './components/ProfilePage';
 import SettingsPage from './components/SettingsPage';
+import FindPage from './components/FindPage';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('splash');
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [activeTab, setActiveTab] = useState('explore');
@@ -29,6 +26,7 @@ export default function App() {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [caption, setCaption] = useState('');
   const [postLocation, setPostLocation] = useState('');
@@ -38,6 +36,9 @@ export default function App() {
   const [userProfile, setUserProfile] = useState(null);
   const [userPosts, setUserPosts] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -106,10 +107,10 @@ export default function App() {
       }
     };
 
-    if (currentPage === 'home' || isAuthenticated) {
+    if (isAuthenticated) {
       fetchPosts();
     }
-  }, [currentPage, isAuthenticated]);
+  }, [isAuthenticated]);
 
   const handleToggleFollow = async (targetUserId) => {
     try {
@@ -180,7 +181,7 @@ export default function App() {
     };
 
     fetchNotifications();
-  }, [isAuthenticated, currentPage]);
+  }, [isAuthenticated, location.pathname]);
 
   // Fetch user profile and posts
   useEffect(() => {
@@ -204,46 +205,55 @@ export default function App() {
 
   // Check if user is already logged in on mount
   useEffect(() => {
-    const token = api.auth.getToken();
-    if (token) {
-      setIsAuthenticated(true);
-    }
+    const validateToken = async () => {
+      const token = api.auth.getToken();
+      if (!token) {
+        setIsAuthenticated(false);
+        setAuthChecked(true);
+        return;
+      }
+
+      try {
+        await api.auth.getProfile();
+        setIsAuthenticated(true);
+      } catch (err) {
+        api.auth.logout();
+        setIsAuthenticated(false);
+        setCurrentUserId(null);
+        setUserProfile(null);
+        setUserPosts([]);
+        setExpandedComments({});
+        setPostComments({});
+      } finally {
+        setAuthChecked(true);
+      }
+    };
+
+    validateToken();
   }, []);
 
-  // Handle splash screen animation
-  useEffect(() => {
-    if (currentPage === 'splash') {
-      const timer1 = setTimeout(() => setShowLogo(true), 300);
-      const timer2 = setTimeout(() => setShowText(true), 1500);
-      const timer3 = setTimeout(() => setCurrentPage('login'), 3000);
-      
-      return () => {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-        clearTimeout(timer3);
-      };
-    }
-  }, [currentPage]);
-
-  // Navigation functions
-  const goToHome = () => setCurrentPage('home');
-  const goToLogin = () => setCurrentPage('login');
-  const goToProfile = () => setCurrentPage('profile');
-  const goToCreate = () => setCurrentPage('create');
-  const goToFind = () => setCurrentPage('find');
-  const goToNotifications = () => setCurrentPage('notifications');
-  const goToMap = () => setCurrentPage('map');
-  const goToSettings = () => setCurrentPage('settings');
-  const goBack = () => setCurrentPage('home');
+  const goToHome = () => navigate('/home');
+  const goToLogin = () => navigate('/login');
+  const goToProfile = () => navigate('/profile');
+  const goToCreate = () => navigate('/create');
+  const goToFind = () => navigate('/find');
+  const goToNotifications = () => navigate('/notifications');
+  const goToMap = () => navigate('/map');
+  const goToSettings = () => navigate('/settings');
+  const goBack = () => navigate(-1);
 
   // Handle sign out
   const handleSignOut = () => {
     api.auth.logout();
     setIsAuthenticated(false);
     setCurrentUserId(null);
+    setUserProfile(null);
+    setUserPosts([]);
+    setExpandedComments({});
+    setPostComments({});
     setLoginEmail('');
     setLoginPassword('');
-    goToLogin();
+    navigate('/login', { replace: true });
   };
 
   // Handle mark all notifications as read
@@ -297,6 +307,14 @@ export default function App() {
         return post;
       }));
 
+      setUserPosts(prev => prev.map(post => {
+        if (post.id === postId) {
+          const nextLikes = wasLiked ? (post.likes || 0) - 1 : (post.likes || 0) + 1;
+          return { ...post, likes: nextLikes };
+        }
+        return post;
+      }));
+
       // Make API call
       const result = await api.posts.like(postId);
       const nextLikesCount = Number.parseInt(result?.likes_count, 10);
@@ -311,6 +329,13 @@ export default function App() {
           }
           return post;
         }));
+
+        setUserPosts(prev => prev.map(post => {
+          if (post.id === postId) {
+            return { ...post, likes: nextLikesCount };
+          }
+          return post;
+        }));
       }
     } catch (err) {
       console.error('Error liking post:', err);
@@ -322,6 +347,13 @@ export default function App() {
             isLiked: wasLiked,
             likes: currentLikes
           };
+        }
+        return post;
+      }));
+
+      setUserPosts(prev => prev.map(post => {
+        if (post.id === postId) {
+          return { ...post, likes: currentLikes };
         }
         return post;
       }));
@@ -398,8 +430,41 @@ export default function App() {
         }
         return post;
       }));
+
+      setUserPosts(prev => prev.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            comments: (post.comments || 0) + 1
+          };
+        }
+        return post;
+      }));
     } catch (err) {
       console.error('Error adding comment:', err);
+      alert(err.message);
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    try {
+      await api.posts.delete(postId);
+
+      setPosts(prev => prev.filter(p => p.id !== postId));
+      setUserPosts(prev => prev.filter(p => p.id !== postId));
+
+      setExpandedComments(prev => {
+        const next = { ...prev };
+        delete next[postId];
+        return next;
+      });
+      setPostComments(prev => {
+        const next = { ...prev };
+        delete next[postId];
+        return next;
+      });
+    } catch (err) {
+      console.error('Error deleting post:', err);
       alert(err.message);
     }
   };
@@ -443,13 +508,16 @@ export default function App() {
     try {
       setLoading(true);
       setError(null);
+      setUserProfile(null);
+      setUserPosts([]);
+      setCurrentUserId(null);
       if (isLogin) {
         await api.auth.login(loginEmail, loginPassword);
       } else {
         await api.auth.signup(loginEmail, loginPassword);
       }
       setIsAuthenticated(true);
-      goToHome();
+      navigate('/home', { replace: true });
     } catch (err) {
       setError(err.message);
       alert(err.message);
@@ -458,122 +526,197 @@ export default function App() {
     }
   };
 
-  // Render pages
-  if (currentPage === 'splash') {
+  const ProtectedRoute = ({ children }) => {
+    if (!authChecked) {
+      return null;
+    }
+    if (!isAuthenticated) {
+      return <Navigate to="/login" replace />;
+    }
+    return children;
+  };
+
+  const SplashRoute = () => {
+    useEffect(() => {
+      if (!authChecked) return;
+      const timer1 = setTimeout(() => setShowLogo(true), 700);
+      const timer2 = setTimeout(() => setShowText(true), 2500);
+      const timer3 = setTimeout(() => {
+        navigate(isAuthenticated ? '/home' : '/login', { replace: true });
+      }, 5000);
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+      };
+    }, []);
+
     return <SplashScreen showLogo={showLogo} showText={showText} />;
-  }
+  };
 
-  if (currentPage === 'login') {
-    return (
-      <LoginPage
-        isLogin={isLogin}
-        setIsLogin={setIsLogin}
-        showPassword={showPassword}
-        setShowPassword={setShowPassword}
-        loginEmail={loginEmail}
-        setLoginEmail={setLoginEmail}
-        loginPassword={loginPassword}
-        setLoginPassword={setLoginPassword}
-        loading={loading}
-        error={error}
-        onSubmit={handleAuthSubmit}
-        goToHome={goToHome}
-      />
-    );
-  }
-
-  if (currentPage === 'map') {
-    return (
-      <MapPage
-        goBack={goBack}
-        goToProfile={goToProfile}
-        goToSettings={goToSettings}
-        goToNotifications={goToNotifications}
-        onSignOut={handleSignOut}
-        unreadCount={unreadCount}
-        posts={posts}
-      />
-    );
-  }
-
-  if (currentPage === 'create') {
-    return (
-      <CreatePostPage
-        goBack={goBack}
-        selectedImage={selectedImage}
-        setSelectedImage={setSelectedImage}
-        caption={caption}
-        setCaption={setCaption}
-        location={postLocation}
-        setLocation={setPostLocation}
-        onSubmit={handleCreatePost}
-      />
-    );
-  }
-
-  if (currentPage === 'notifications') {
-    return (
-      <NotificationsPage
-        goBack={goBack}
-        notifications={notifications}
-        unreadCount={unreadCount}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onMarkAllAsRead={handleMarkAllAsRead}
-      />
-    );
-  }
-
-  if (currentPage === 'profile') {
-    return (
-      <ProfilePage
-        goBack={goBack}
-        goToSettings={goToSettings}
-        onSignOut={handleSignOut}
-        user={userProfile}
-        userPosts={userPosts}
-        onUpdateProfile={handleUpdateProfile}
-      />
-    );
-  }
-
-  if (currentPage === 'settings') {
-    return (
-      <SettingsPage
-        goBack={goBack}
-        onSignOut={handleSignOut}
-        user={userProfile}
-      />
-    );
-  }
-
-  // Default to HomePage
   return (
-    <HomePage
-      posts={posts}
-      loading={loading}
-      error={error}
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      selectedFilter={selectedFilter}
-      setSelectedFilter={setSelectedFilter}
-      isMobileMenuOpen={isMobileMenuOpen}
-      setIsMobileMenuOpen={setIsMobileMenuOpen}
-      unreadCount={unreadCount}
-      goToCreate={goToCreate}
-      goToFind={goToFind}
-      goToProfile={goToProfile}
-      goToNotifications={goToNotifications}
-      goToSettings={goToSettings}
-      goToMap={goToMap}
-      onSignOut={handleSignOut}
-      onLikePost={handleLikePost}
-      onToggleComments={handleToggleComments}
-      onAddComment={handleAddComment}
-      currentUserId={currentUserId}
-      onToggleFollow={handleToggleFollow}
-      expandedComments={expandedComments}
-      postComments={postComments}
-    />
+    <Routes>
+      <Route path="/" element={<SplashRoute />} />
+
+      <Route
+        path="/login"
+        element={
+          !authChecked ? null : isAuthenticated ? (
+            <Navigate to="/home" replace />
+          ) : (
+            <LoginPage
+              isLogin={isLogin}
+              setIsLogin={setIsLogin}
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
+              loginEmail={loginEmail}
+              setLoginEmail={setLoginEmail}
+              loginPassword={loginPassword}
+              setLoginPassword={setLoginPassword}
+              loading={loading}
+              error={error}
+              onSubmit={handleAuthSubmit}
+              goToHome={goToHome}
+            />
+          )
+        }
+      />
+
+      <Route
+        path="/home"
+        element={
+          <ProtectedRoute>
+            <HomePage
+              posts={posts}
+              loading={loading}
+              error={error}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              selectedFilter={selectedFilter}
+              setSelectedFilter={setSelectedFilter}
+              isMobileMenuOpen={isMobileMenuOpen}
+              setIsMobileMenuOpen={setIsMobileMenuOpen}
+              unreadCount={unreadCount}
+              goToCreate={goToCreate}
+              goToFind={goToFind}
+              goToProfile={goToProfile}
+              goToNotifications={goToNotifications}
+              goToSettings={goToSettings}
+              goToMap={goToMap}
+              onSignOut={handleSignOut}
+              onLikePost={handleLikePost}
+              onToggleComments={handleToggleComments}
+              onAddComment={handleAddComment}
+              currentUserId={currentUserId}
+              onToggleFollow={handleToggleFollow}
+              expandedComments={expandedComments}
+              postComments={postComments}
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/find"
+        element={
+          <ProtectedRoute>
+            <FindPage
+              goBack={() => navigate('/home')}
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/create"
+        element={
+          <ProtectedRoute>
+            <CreatePostPage
+              goBack={() => navigate('/home')}
+              selectedImage={selectedImage}
+              setSelectedImage={setSelectedImage}
+              caption={caption}
+              setCaption={setCaption}
+              location={postLocation}
+              setLocation={setPostLocation}
+              onSubmit={handleCreatePost}
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage
+              goBack={() => navigate('/home')}
+              goToSettings={goToSettings}
+              onSignOut={handleSignOut}
+              user={userProfile}
+              userPosts={userPosts}
+              onUpdateProfile={handleUpdateProfile}
+              posts={posts}
+              currentUserId={currentUserId}
+              expandedComments={expandedComments}
+              postComments={postComments}
+              onLikePost={handleLikePost}
+              onToggleComments={handleToggleComments}
+              onAddComment={handleAddComment}
+              onDeletePost={handleDeletePost}
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <NotificationsPage
+              goBack={() => navigate('/home')}
+              notifications={notifications}
+              unreadCount={unreadCount}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              onMarkAllAsRead={handleMarkAllAsRead}
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/map"
+        element={
+          <ProtectedRoute>
+            <MapPage
+              goBack={() => navigate('/home')}
+              goToProfile={goToProfile}
+              goToSettings={goToSettings}
+              goToNotifications={goToNotifications}
+              onSignOut={handleSignOut}
+              unreadCount={unreadCount}
+              posts={posts}
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage
+              goBack={() => navigate('/home')}
+              onSignOut={handleSignOut}
+              user={userProfile}
+            />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
