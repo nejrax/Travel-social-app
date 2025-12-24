@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   ArrowLeft, Lock, Bell, Globe, Eye, Shield, HelpCircle, 
   LogOut, ChevronRight, Moon, Sun, Smartphone, Mail, Key,
@@ -25,6 +25,23 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
     theme: 'dark'
   });
 
+  const isDark = settings.theme === 'dark';
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      setSettings(prev => ({ ...prev, theme: savedTheme }));
+      document.body.dataset.theme = savedTheme;
+    } else {
+      document.body.dataset.theme = settings.theme;
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('theme', settings.theme);
+    document.body.dataset.theme = settings.theme;
+  }, [settings.theme]);
+
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -38,6 +55,13 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
         ...prev[category],
         [setting]: !prev[category][setting]
       }
+    }));
+  };
+
+  const handleToggleTheme = () => {
+    setSettings(prev => ({
+      ...prev,
+      theme: prev.theme === 'dark' ? 'light' : 'dark'
     }));
   };
 
@@ -100,7 +124,7 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
       title: 'Appearance',
       icon: settings.theme === 'dark' ? Moon : Sun,
       items: [
-        { id: 'theme', label: 'Theme', value: settings.theme === 'dark' ? 'Dark Mode' : 'Light Mode', icon: settings.theme === 'dark' ? Moon : Sun }
+        { id: 'theme', label: 'Theme', value: settings.theme === 'dark' ? 'Dark Mode' : 'Light Mode', icon: settings.theme === 'dark' ? Moon : Sun, action: handleToggleTheme }
       ]
     },
     {
@@ -108,9 +132,9 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
       title: 'Help & Support',
       icon: HelpCircle,
       items: [
-        { id: 'faq', label: 'FAQ', icon: HelpCircle },
-        { id: 'contact', label: 'Contact Support', icon: Mail },
-        { id: 'about', label: 'About TravelConnect', icon: Globe }
+        { id: 'faq', label: 'FAQ', icon: HelpCircle, action: () => setActiveSection('faq') },
+        { id: 'contact', label: 'Contact Support', icon: Mail, action: () => setActiveSection('contact') },
+        { id: 'about', label: 'About TravelConnect', icon: Globe, action: () => setActiveSection('about') }
       ]
     },
     {
@@ -125,7 +149,13 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
+    <div
+      className={`min-h-screen relative overflow-hidden ${
+        isDark
+          ? 'bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 text-white'
+          : 'bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-900'
+      }`}
+    >
       <div className="absolute inset-0 opacity-20">
         <div className="w-full h-full bg-[url('https://placehold.co/1920x1080/1e293b/ffffff?text=World+Map')] bg-cover bg-center"></div>
       </div>
@@ -143,11 +173,15 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
           <div className="flex items-center space-x-4">
             <button
               onClick={goBack}
-              className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+              className={`p-2 rounded-full transition-colors ${
+                isDark
+                  ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+              }`}
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-2xl font-bold text-white">Settings</h1>
+            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Settings</h1>
           </div>
         </motion.header>
 
@@ -156,13 +190,19 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20"
+            className={`backdrop-blur-lg rounded-2xl p-6 border ${
+              isDark ? 'bg-white/10 border-white/20' : 'bg-white/70 border-black/10'
+            }`}
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">Change Password</h2>
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Change Password</h2>
               <button
                 onClick={() => setActiveSection(null)}
-                className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                className={`p-2 rounded-full transition-colors ${
+                  isDark
+                    ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                }`}
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
@@ -170,41 +210,55 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-blue-200 mb-2">Current Password</label>
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-blue-200' : 'text-slate-700'}`}>Current Password</label>
                 <input
                   type="password"
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                    isDark
+                      ? 'bg-white/10 border border-white/20 text-white placeholder-blue-300'
+                      : 'bg-white border border-black/10 text-slate-900 placeholder-slate-400'
+                  }`}
                   placeholder="Enter current password"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-blue-200 mb-2">New Password</label>
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-blue-200' : 'text-slate-700'}`}>New Password</label>
                 <input
                   type="password"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                    isDark
+                      ? 'bg-white/10 border border-white/20 text-white placeholder-blue-300'
+                      : 'bg-white border border-black/10 text-slate-900 placeholder-slate-400'
+                  }`}
                   placeholder="Enter new password"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-blue-200 mb-2">Confirm New Password</label>
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-blue-200' : 'text-slate-700'}`}>Confirm New Password</label>
                 <input
                   type="password"
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                    isDark
+                      ? 'bg-white/10 border border-white/20 text-white placeholder-blue-300'
+                      : 'bg-white border border-black/10 text-slate-900 placeholder-slate-400'
+                  }`}
                   placeholder="Confirm new password"
                 />
               </div>
 
-              <div className="bg-blue-500/10 border border-blue-400/20 rounded-lg p-4 flex items-start space-x-3">
+              <div className={`rounded-lg p-4 flex items-start space-x-3 ${
+                isDark ? 'bg-blue-500/10 border border-blue-400/20' : 'bg-blue-50 border border-blue-200'
+              }`}>
                 <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-blue-200">
+                <p className={`text-sm ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>
                   Password must be at least 6 characters long and contain a mix of letters and numbers.
                 </p>
               </div>
@@ -217,6 +271,115 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
               </button>
             </div>
           </motion.div>
+        ) : activeSection === 'about' ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className={`backdrop-blur-lg rounded-2xl p-6 border ${
+              isDark ? 'bg-white/10 border-white/20' : 'bg-white/70 border-black/10'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>About TravelConnect</h2>
+              <button
+                onClick={() => setActiveSection(null)}
+                className={`p-2 rounded-full transition-colors ${
+                  isDark
+                    ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                }`}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+            </div>
+            <div className={`space-y-4 leading-relaxed ${isDark ? 'text-blue-100' : 'text-slate-700'}`}>
+              <p>
+                TravelConnect is a social travel app where you can share your trips, discover places through other travelers, and keep your favorite destinations organized.
+              </p>
+              <p>
+                Post photos, add locations, interact through likes and comments, and explore what’s trending in the community.
+              </p>
+              <div className={`rounded-xl p-4 border ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-black/10'}`}>
+                <div className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>Version</div>
+                <div className={isDark ? 'text-blue-200' : 'text-slate-600'}>v1.0.0</div>
+              </div>
+            </div>
+          </motion.div>
+        ) : activeSection === 'faq' ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className={`backdrop-blur-lg rounded-2xl p-6 border ${
+              isDark ? 'bg-white/10 border-white/20' : 'bg-white/70 border-black/10'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>FAQ</h2>
+              <button
+                onClick={() => setActiveSection(null)}
+                className={`p-2 rounded-full transition-colors ${
+                  isDark
+                    ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                }`}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className={`rounded-xl p-4 border ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-black/10'}`}>
+                <div className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>How do I create a post?</div>
+                <div className={`mt-2 ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>Go to Create, select an image, write a caption, choose a city, and publish.</div>
+              </div>
+              <div className={`rounded-xl p-4 border ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-black/10'}`}>
+                <div className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Why can’t I see comments?</div>
+                <div className={`mt-2 ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>Tap the comment icon on a post to load and view comments.</div>
+              </div>
+              <div className={`rounded-xl p-4 border ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-black/10'}`}>
+                <div className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>What makes a post trending?</div>
+                <div className={`mt-2 ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>Trending posts are based on engagement (likes + comments) or popular locations with multiple posts.</div>
+              </div>
+            </div>
+          </motion.div>
+        ) : activeSection === 'contact' ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className={`backdrop-blur-lg rounded-2xl p-6 border ${
+              isDark ? 'bg-white/10 border-white/20' : 'bg-white/70 border-black/10'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Contact Support</h2>
+              <button
+                onClick={() => setActiveSection(null)}
+                className={`p-2 rounded-full transition-colors ${
+                  isDark
+                    ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                }`}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+            </div>
+            <div className={`space-y-4 ${isDark ? 'text-blue-100' : 'text-slate-700'}`}>
+              <div className={`rounded-xl p-4 border ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-black/10'}`}>
+                <div className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>Email</div>
+                <div className={`${isDark ? 'text-blue-200' : 'text-slate-600'} break-words`}>support@travelconnect.app</div>
+              </div>
+              <div className={`rounded-xl p-4 border ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-black/10'}`}>
+                <div className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>Response time</div>
+                <div className={isDark ? 'text-blue-200' : 'text-slate-600'}>Typically within 24–48 hours</div>
+              </div>
+              <div className={`rounded-xl p-4 border ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-black/10'}`}>
+                <div className={`font-semibold mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>Include in your message</div>
+                <div className={isDark ? 'text-blue-200' : 'text-slate-600'}>Your username, what happened, and screenshots if possible.</div>
+              </div>
+            </div>
+          </motion.div>
         ) : (
           <div className="space-y-4">
             {settingsSections.map((section, index) => (
@@ -225,28 +388,30 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 * index }}
-                className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden"
+                className={`backdrop-blur-lg rounded-2xl border overflow-hidden ${
+                  isDark ? 'bg-white/10 border-white/20' : 'bg-white/70 border-black/10'
+                }`}
               >
-                <div className="p-4 border-b border-white/20">
+                <div className={`p-4 border-b ${isDark ? 'border-white/20' : 'border-black/10'}`}>
                   <div className="flex items-center space-x-3">
-                    <section.icon className="w-5 h-5 text-blue-300" />
-                    <h2 className="text-lg font-semibold text-white">{section.title}</h2>
+                    <section.icon className={`w-5 h-5 ${isDark ? 'text-blue-300' : 'text-slate-600'}`} />
+                    <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{section.title}</h2>
                   </div>
                 </div>
 
-                <div className="divide-y divide-white/10">
+                <div className={`divide-y ${isDark ? 'divide-white/10' : 'divide-black/5'}`}>
                   {section.items.map((item) => (
                     <div
                       key={item.id}
-                      className="p-4 hover:bg-white/5 transition-colors"
+                      className={`p-4 transition-colors ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3 flex-1">
-                          {item.icon && <item.icon className="w-5 h-5 text-blue-200" />}
-                          <div className="flex-1">
-                            <div className="text-white font-medium">{item.label}</div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          {item.icon && <item.icon className={`w-5 h-5 ${isDark ? 'text-blue-200' : 'text-slate-600'}`} />}
+                          <div className="flex-1 min-w-0">
+                            <div className={`font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.label}</div>
                             {item.value && !item.toggle && (
-                              <div className="text-sm text-blue-200">{item.value}</div>
+                              <div className={`text-sm break-words ${isDark ? 'text-blue-200' : 'text-slate-600'}`}>{item.value}</div>
                             )}
                           </div>
                         </div>
@@ -255,7 +420,7 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
                           <button
                             onClick={() => handleToggleSetting(section.id, item.id)}
                             className={`relative w-12 h-6 rounded-full transition-colors ${
-                              item.value ? 'bg-blue-500' : 'bg-white/20'
+                              item.value ? 'bg-blue-500' : (isDark ? 'bg-white/20' : 'bg-black/10')
                             }`}
                           >
                             <div
@@ -267,12 +432,16 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
                         ) : item.action ? (
                           <button
                             onClick={item.action}
-                            className="p-2 text-blue-200 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                            className={`p-2 rounded-full transition-colors ${
+                              isDark
+                                ? 'text-blue-200 hover:text-white hover:bg-white/10'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                            }`}
                           >
                             <ChevronRight className="w-5 h-5" />
                           </button>
                         ) : (
-                          <ChevronRight className="w-5 h-5 text-blue-200" />
+                          <ChevronRight className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-blue-200' : 'text-slate-500'}`} />
                         )}
                       </div>
                     </div>
@@ -289,7 +458,11 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
             >
               <button
                 onClick={onSignOut}
-                className="w-full bg-red-500/20 backdrop-blur-lg rounded-2xl p-4 border border-red-400/30 hover:bg-red-500/30 transition-all"
+                className={`w-full backdrop-blur-lg rounded-2xl p-4 border transition-all ${
+                  isDark
+                    ? 'bg-red-500/20 border-red-400/30 hover:bg-red-500/30'
+                    : 'bg-red-50 border-red-200 hover:bg-red-100'
+                }`}
               >
                 <div className="flex items-center justify-center space-x-3">
                   <LogOut className="w-5 h-5 text-red-400" />
@@ -310,19 +483,23 @@ export default function SettingsPage({ goBack, onSignOut, user }) {
                     alert('Account deletion feature coming soon');
                   }
                 }}
-                className="w-full bg-white/5 backdrop-blur-lg rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition-all"
+                className={`w-full backdrop-blur-lg rounded-2xl p-4 border transition-all ${
+                  isDark
+                    ? 'bg-white/5 border-white/10 hover:bg-white/10'
+                    : 'bg-white border-black/10 hover:bg-black/5'
+                }`}
               >
                 <div className="flex items-center justify-center space-x-3">
-                  <UserX className="w-5 h-5 text-blue-200" />
-                  <span className="text-blue-200 font-medium">Delete Account</span>
+                  <UserX className={`w-5 h-5 ${isDark ? 'text-blue-200' : 'text-slate-600'}`} />
+                  <span className={`${isDark ? 'text-blue-200' : 'text-slate-700'} font-medium`}>Delete Account</span>
                 </div>
               </button>
             </motion.div>
 
             {/* App Version */}
             <div className="text-center py-4">
-              <p className="text-sm text-blue-300">TravelConnect v1.0.0</p>
-              <p className="text-xs text-blue-200 mt-1">© 2024 All rights reserved</p>
+              <p className={`text-sm ${isDark ? 'text-blue-300' : 'text-slate-600'}`}>TravelConnect v1.0.0</p>
+              <p className={`text-xs mt-1 ${isDark ? 'text-blue-200' : 'text-slate-500'}`}>© 2024 All rights reserved</p>
             </div>
           </div>
         )}
