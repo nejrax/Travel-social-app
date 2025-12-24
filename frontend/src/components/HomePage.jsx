@@ -30,6 +30,8 @@ export default function HomePage({
   onLikePost,
   onToggleComments,
   onAddComment,
+  currentUserId,
+  onToggleFollow,
   expandedComments,
   postComments
 }) {
@@ -52,12 +54,19 @@ export default function HomePage({
     );
   });
 
+  const filteredByTab = filteredPosts.filter((post) => {
+    if (selectedFilter === 'trending') {
+      return !!post.isTrending;
+    }
+    return true;
+  });
+
   useEffect(() => {
     setVisiblePostsCount(5);
-  }, [searchQuery, posts]);
+  }, [searchQuery, posts, selectedFilter]);
 
-  const visiblePosts = filteredPosts.slice(0, visiblePostsCount);
-  const hasMorePosts = visiblePostsCount < filteredPosts.length;
+  const visiblePosts = filteredByTab.slice(0, visiblePostsCount);
+  const hasMorePosts = visiblePostsCount < filteredByTab.length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 relative overflow-hidden">
@@ -282,9 +291,28 @@ export default function HomePage({
                     <p className="text-blue-200 text-sm">{post.user.username}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-1 text-blue-200">
-                  <MapPin className="w-4 h-4" />
-                  <span className="text-sm">{post.location}</span>
+                <div className="flex items-center space-x-3">
+                  {post.isTrending && (
+                    <div className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow">
+                      Trending
+                    </div>
+                  )}
+                  {currentUserId && post.userId && currentUserId !== post.userId && (
+                    <button
+                      onClick={() => onToggleFollow && onToggleFollow(post.userId)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all border ${
+                        post.isFollowing
+                          ? 'bg-white/10 text-white border-white/20 hover:bg-white/15'
+                          : 'bg-gradient-to-r from-blue-500 to-orange-500 text-white border-transparent hover:from-blue-600 hover:to-orange-600'
+                      }`}
+                    >
+                      {post.isFollowing ? 'Following' : 'Follow'}
+                    </button>
+                  )}
+                  <div className="flex items-center space-x-1 text-blue-200">
+                    <MapPin className="w-4 h-4" />
+                    <span className="text-sm">{post.location}</span>
+                  </div>
                 </div>
               </div>
 

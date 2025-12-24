@@ -55,6 +55,32 @@ export const api = {
       return response.json();
     },
 
+    uploadProfilePhoto: async (file) => {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        throw new Error('You must be logged in');
+      }
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch(`${API_BASE_URL}/auth/profile/photo`, {
+        method: 'POST',
+        headers: {
+          'x-auth-token': token,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.msg || 'Failed to upload profile photo');
+      }
+
+      return response.json();
+    },
+
     updateProfile: async (profileData) => {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE_URL}/auth/profile`, {
@@ -94,6 +120,30 @@ export const api = {
 
     getToken: () => {
       return localStorage.getItem('token');
+    }
+  },
+
+  follows: {
+    toggle: async (userId) => {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('You must be logged in to follow users');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/auth/follow/${userId}`, {
+        method: 'POST',
+        headers: {
+          'x-auth-token': token,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.msg || 'Failed to follow user');
+      }
+
+      return await response.json();
     }
   },
 

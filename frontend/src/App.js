@@ -37,8 +37,59 @@ export default function App() {
   const [postComments, setPostComments] = useState({});
   const [userProfile, setUserProfile] = useState(null);
   const [userPosts, setUserPosts] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const formatPosts = (data) => {
+    const base = data.map(post => ({
+      id: post.post_id,
+      userId: post.user_id,
+      user: {
+        name: post.username,
+        username: `@${post.username}`,
+        avatar: `https://placehold.co/40x40/4f46e5/ffffff?text=${post.username.charAt(0).toUpperCase()}`
+      },
+      image: post.image_url,
+      caption: post.description,
+      location: post.city,
+      likes: parseInt(post.likes_count) || 0,
+      comments: parseInt(post.comments_count) || 0,
+      date: new Date(post.created_at).toLocaleDateString(),
+      isLiked: post.is_liked === true || post.is_liked === 'true' || post.is_liked === 1 || post.is_liked === '1',
+      isFollowing: post.is_following === true || post.is_following === 'true' || post.is_following === 1 || post.is_following === '1',
+      title: post.title,
+      price: post.price,
+      googleMapsLink: post.google_maps_link
+    }));
+
+    const locationCounts = base.reduce((acc, p) => {
+      const key = (p.location || '').toLowerCase();
+      if (!key) return acc;
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    const ranked = [...base]
+      .map(p => ({
+        id: p.id,
+        score: (p.likes || 0) + (p.comments || 0)
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    const topCount = Math.min(5, ranked.length);
+    const topIds = new Set(ranked.slice(0, topCount).map(r => r.id));
+
+    return base.map(p => {
+      const locKey = (p.location || '').toLowerCase();
+      const isPopularLocation = locKey && (locationCounts[locKey] || 0) >= 2;
+      const isTopEngagement = topIds.has(p.id);
+      return {
+        ...p,
+        isTrending: isTopEngagement || isPopularLocation
+      };
+    });
+  };
 
   // Fetch posts from API
   useEffect(() => {
@@ -46,25 +97,7 @@ export default function App() {
       try {
         setLoading(true);
         const data = await api.posts.getAll();
-        const formattedPosts = data.map(post => ({
-          id: post.post_id,
-          user: {
-            name: post.username,
-            username: `@${post.username}`,
-            avatar: `https://placehold.co/40x40/4f46e5/ffffff?text=${post.username.charAt(0).toUpperCase()}`
-          },
-          image: post.image_url,
-          caption: post.description,
-          location: post.city,
-          likes: parseInt(post.likes_count) || 0,
-          comments: parseInt(post.comments_count) || 0,
-          date: new Date(post.created_at).toLocaleDateString(),
-          isLiked: post.is_liked === true || post.is_liked === 'true' || post.is_liked === 1 || post.is_liked === '1',
-          title: post.title,
-          price: post.price,
-          googleMapsLink: post.google_maps_link
-        }));
-        setPosts(formattedPosts);
+        setPosts(formatPosts(data));
       } catch (err) {
         console.error('Error fetching posts:', err);
         setError(err.message);
@@ -77,6 +110,29 @@ export default function App() {
       fetchPosts();
     }
   }, [currentPage, isAuthenticated]);
+
+  const handleToggleFollow = async (targetUserId) => {
+    try {
+      const result = await api.follows.toggle(targetUserId);
+
+      setPosts(prevPosts => prevPosts.map(post => {
+        if (post.userId === targetUserId) {
+          return {
+            ...post,
+            isFollowing: !!result.following
+          };
+        }
+        return post;
+      }));
+
+      if (typeof result?.current_user_following_count === 'number') {
+        setUserProfile(prev => prev ? { ...prev, following: result.current_user_following_count } : prev);
+      }
+    } catch (err) {
+      console.error('Error following user:', err);
+      alert(err.message);
+    }
+  };
 
   // Fetch locations from API
   useEffect(() => {
@@ -133,6 +189,7 @@ export default function App() {
         try {
           const profile = await api.auth.getProfile();
           setUserProfile(profile);
+          setCurrentUserId(profile?.id || null);
           
           const posts = await api.auth.getUserPosts();
           setUserPosts(posts);
@@ -183,6 +240,7 @@ export default function App() {
   const handleSignOut = () => {
     api.auth.logout();
     setIsAuthenticated(false);
+    setCurrentUserId(null);
     setLoginEmail('');
     setLoginPassword('');
     goToLogin();
@@ -369,25 +427,7 @@ export default function App() {
         
         // Refresh posts
         const data = await api.posts.getAll();
-        const formattedPosts = data.map(post => ({
-          id: post.post_id,
-          user: {
-            name: post.username,
-            username: `@${post.username}`,
-            avatar: `https://placehold.co/40x40/4f46e5/ffffff?text=${post.username.charAt(0).toUpperCase()}`
-          },
-          image: post.image_url,
-          caption: post.description,
-          location: post.city,
-          likes: parseInt(post.likes_count) || 0,
-          comments: parseInt(post.comments_count) || 0,
-          date: new Date(post.created_at).toLocaleDateString(),
-          isLiked: post.is_liked === true || post.is_liked === 'true' || post.is_liked === 1 || post.is_liked === '1',
-          title: post.title,
-          price: post.price,
-          googleMapsLink: post.google_maps_link
-        }));
-        setPosts(formattedPosts);
+        setPosts(formatPosts(data));
       } catch (err) {
         console.error('Error creating post:', err.message);
         alert('Failed to create post: ' + err.message);
@@ -530,6 +570,8 @@ export default function App() {
       onLikePost={handleLikePost}
       onToggleComments={handleToggleComments}
       onAddComment={handleAddComment}
+      currentUserId={currentUserId}
+      onToggleFollow={handleToggleFollow}
       expandedComments={expandedComments}
       postComments={postComments}
     />

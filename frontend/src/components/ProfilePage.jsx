@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import { api } from '../api';
 import { 
   ArrowLeft, Camera, Edit2, MapPin, Calendar, Link as LinkIcon,
-  Settings, Grid, Bookmark, Heart, MessageCircle, X, Check
+  Settings, Grid, Heart, MessageCircle, X, Check
 } from 'lucide-react';
 import UserDropdown from './UserDropdown';
 
@@ -24,27 +25,32 @@ export default function ProfilePage({
     website: user?.website || ''
   });
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [activeTab, setActiveTab] = useState('posts');
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setSelectedImage(URL.createObjectURL(file));
+      setSelectedImageFile(file);
     }
   };
 
   const handleSaveProfile = async () => {
     try {
+      let profilePictureUrl = selectedImage;
+      if (selectedImageFile) {
+        const uploaded = await api.auth.uploadProfilePhoto(selectedImageFile);
+        profilePictureUrl = uploaded.profilePicture;
+      }
+
       await onUpdateProfile({
         ...editedProfile,
-        profilePicture: selectedImage
+        profilePicture: profilePictureUrl
       });
       setIsEditing(false);
       setSelectedImage(null);
+      setSelectedImageFile(null);
     } catch (err) {
       console.error('Error updating profile:', err);
       alert('Failed to update profile');
@@ -60,6 +66,7 @@ export default function ProfilePage({
       website: user?.website || ''
     });
     setSelectedImage(null);
+    setSelectedImageFile(null);
   };
 
   const stats = {
@@ -275,17 +282,6 @@ export default function ProfilePage({
               <Grid className="w-5 h-5" />
               <span className="font-medium">Posts</span>
             </button>
-            <button
-              onClick={() => setActiveTab('saved')}
-              className={`flex-1 flex items-center justify-center space-x-2 py-4 transition-colors ${
-                activeTab === 'saved'
-                  ? 'text-white border-b-2 border-blue-400'
-                  : 'text-blue-200 hover:text-white'
-              }`}
-            >
-              <Bookmark className="w-5 h-5" />
-              <span className="font-medium">Saved</span>
-            </button>
           </div>
 
           {/* Posts Grid */}
@@ -319,14 +315,6 @@ export default function ProfilePage({
                     <p className="text-blue-200">Share your travel adventures!</p>
                   </div>
                 )}
-              </div>
-            )}
-
-            {activeTab === 'saved' && (
-              <div className="text-center py-12">
-                <Bookmark className="w-16 h-16 text-blue-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">No Saved Posts</h3>
-                <p className="text-blue-200">Save posts to view them later</p>
               </div>
             )}
           </div>

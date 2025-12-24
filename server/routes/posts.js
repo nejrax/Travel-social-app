@@ -53,6 +53,10 @@ router.get('/', async (req, res) => {
                 SELECT 1 FROM likes l 
                 WHERE l.post_id = p.post_id AND l.user_id = $1
               ) as is_liked,
+              EXISTS(
+                SELECT 1 FROM follows f
+                WHERE f.follower_id = $1 AND f.followed_id = p.user_id
+              ) as is_following,
               (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comments_count
        FROM posts p
        JOIN users u ON p.user_id = u.user_id
@@ -91,6 +95,10 @@ router.get('/:city', async (req, res) => {
                 SELECT 1 FROM likes l 
                 WHERE l.post_id = p.post_id AND l.user_id = $2
               ) as is_liked,
+              EXISTS(
+                SELECT 1 FROM follows f
+                WHERE f.follower_id = $2 AND f.followed_id = p.user_id
+              ) as is_following,
               (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comments_count
        FROM posts p
        JOIN users u ON p.user_id = u.user_id

@@ -1,11 +1,34 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
 const pool = require('../config/db');
 const { body, validationResult } = require('express-validator');
 const auth = require('../middleware/authMiddleware');
 
 const router = express.Router();
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '..', 'uploads'));
+  },
+  filename: (req, file, cb) => {
+    cb(null, `profile_${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5000000 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  }
+});
 
 const generateUsername = (email) => {
   return email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -102,6 +125,85 @@ router.post('/login', async (req, res) => {
         res.json({ token });
       }
     );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Upload profile picture from laptop
+router.post('/profile/photo', auth, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ msg: 'Image file is required' });
+    }
+
+    const imagePath = `/uploads/${req.file.filename}`;
+    const imageUrl = `${req.protocol}://${req.get('host')}${imagePath}`;
+
+    const result = await pool.query(
+      'UPDATE users SET profile_picture_url = $1 WHERE user_id = $2 RETURNING profile_picture_url',
+      [imageUrl, req.user.id]
+    );
+
+    res.json({ profilePicture: result.rows[0].profile_picture_url });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Follow/unfollow a user (toggle)
+router.post('/follow/:id', auth, async (req, res) => {
+  try {
+    const followerId = req.user.id;
+    const followedId = parseInt(req.params.id, 10);
+
+    if (!followedId || Number.isNaN(followedId)) {
+      return res.status(400).json({ msg: 'Invalid user id' });
+    }
+
+    if (followerId === followedId) {
+      return res.status(400).json({ msg: 'You cannot follow yourself' });
+    }
+
+    const existingFollow = await pool.query(
+      'SELECT follow_id FROM follows WHERE follower_id = $1 AND followed_id = $2',
+      [followerId, followedId]
+    );
+
+    let following;
+    if (existingFollow.rows.length > 0) {
+      await pool.query(
+        'DELETE FROM follows WHERE follower_id = $1 AND followed_id = $2',
+        [followerId, followedId]
+      );
+      following = false;
+    } else {
+      await pool.query(
+        'INSERT INTO follows (follower_id, followed_id) VALUES ($1, $2)',
+        [followerId, followedId]
+      );
+      following = true;
+    }
+
+    const currentUserFollowingCountResult = await pool.query(
+      'SELECT COUNT(*)::int as following_count FROM follows WHERE follower_id = $1',
+      [followerId]
+    );
+
+    const targetFollowersCountResult = await pool.query(
+      'SELECT COUNT(*)::int as followers_count FROM follows WHERE followed_id = $1',
+      [followedId]
+    );
+
+    res.json({
+      following,
+      follower_id: followerId,
+      followed_id: followedId,
+      current_user_following_count: currentUserFollowingCountResult.rows[0].following_count,
+      target_followers_count: targetFollowersCountResult.rows[0].followers_count
+    });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
