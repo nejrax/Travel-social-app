@@ -94,13 +94,6 @@ export default function App() {
       googleMapsLink: post.google_maps_link
     }));
 
-    const locationCounts = base.reduce((acc, p) => {
-      const key = (p.location || '').toLowerCase();
-      if (!key) return acc;
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {});
-
     const ranked = [...base]
       .map(p => ({
         id: p.id,
@@ -108,16 +101,14 @@ export default function App() {
       }))
       .sort((a, b) => b.score - a.score);
 
-    const topCount = Math.min(5, ranked.length);
-    const topIds = new Set(ranked.slice(0, topCount).map(r => r.id));
+    const topRanked = ranked.filter(r => r.score > 0).slice(0, 5);
+    const topIds = new Set(topRanked.map(r => r.id));
 
     return base.map(p => {
-      const locKey = (p.location || '').toLowerCase();
-      const isPopularLocation = locKey && (locationCounts[locKey] || 0) >= 2;
       const isTopEngagement = topIds.has(p.id);
       return {
         ...p,
-        isTrending: isTopEngagement || isPopularLocation
+        isTrending: isTopEngagement
       };
     });
   };
@@ -511,6 +502,7 @@ export default function App() {
           city: postLocation.split(',')[0].trim(),
           googleMapsLink: 'https://maps.app.goo.gl/example',
           price: 0,
+          image: selectedImage,
         };
 
         await api.posts.create(newPost);
